@@ -1,7 +1,8 @@
 # This is a dofile. For usage info visit https://github.com/roeldev/do
 
 vars:
-  ldf: "-X main.version=v1.0.1 -X main.buildDate=`date +%FT%T%z` -X main.gitBranch=develop -X main.gitCommit=`git describe --tags`"
+  ldf: "-X main.version=v1.0.1 -X main.buildDate=`date +%FT%T%z` -X main.gitBranch=`git branch --show-current
+` -X main.gitCommit=`git rev-parse --short HEAD`"
 
 # setup project, get dependencies
 setup: go get -v -t -d ./...
