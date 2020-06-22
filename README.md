@@ -28,10 +28,10 @@ import "github.com/roeldev/go-buildinfo"
 ```go
 // these values are changed via ldflags when building a new release
 var (
-	version   = ""
-	buildDate = ""
-	gitBranch = ""
-	gitCommit = ""
+	version   = buildinfo.DummyVersion
+	buildDate = buildinfo.DummyDate
+	gitBranch = buildinfo.DummyBranch
+	gitCommit = buildinfo.DummyCommit
 )
 
 func main() {
@@ -61,8 +61,8 @@ It is often a good idea to make the build information of your app available for 
 prometheus.MustRegister(prometheus.NewGaugeFunc(
     prometheus.GaugeOpts{
         Namespace:   "myapp",
-        Name:        buildinfo.DefaultMetricName,
-        Help:        buildinfo.DefaultMetricHelp,
+        Name:        buildinfo.MetricName,
+        Help:        buildinfo.MetricHelp,
         ConstLabels: bld.ToMap(),
     },
     func() float64 { return 1 },

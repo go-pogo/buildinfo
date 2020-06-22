@@ -16,10 +16,10 @@ import (
 // Default build-time variables. These values are changed via ldflags when
 // building a new release.
 var (
-	version   = ""
-	buildDate = ""
-	gitBranch = ""
-	gitCommit = ""
+	version   = buildinfo.DummyVersion
+	buildDate = buildinfo.DummyDate
+	gitBranch = buildinfo.DummyBranch
+	gitCommit = buildinfo.DummyCommit
 )
 
 func main() {

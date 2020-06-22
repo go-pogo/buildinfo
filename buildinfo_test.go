@@ -43,3 +43,17 @@ func TestBuildInfo_MarshalJSON(t *testing.T) {
 	assert.Exactly(t, wantBytes, haveBytes)
 	assert.Exactly(t, wantErr, haveErr)
 }
+
+func TestIsDummy(t *testing.T) {
+	t.Run("true", func(t *testing.T) {
+		assert.True(t, IsDummy(BuildInfo{
+			Version: DummyVersion,
+			Date:    DummyDate,
+			Branch:  DummyBranch,
+			Commit:  DummyCommit,
+		}))
+	})
+	t.Run("false", func(t *testing.T) {
+		assert.False(t, IsDummy(BuildInfo{}))
+	})
+}
