@@ -1,5 +1,5 @@
 go-buildinfo
-=======
+============
 
 [![Latest release][latest-release-img]][latest-release-url]
 [![Build status][build-status-img]][build-status-url]
@@ -28,29 +28,29 @@ import "github.com/roeldev/go-buildinfo"
 ```go
 // these values are changed via ldflags when building a new release
 var (
-	version   = buildinfo.DummyVersion
-	buildDate = buildinfo.DummyDate
-	gitBranch = buildinfo.DummyBranch
-	gitCommit = buildinfo.DummyCommit
+	version = buildinfo.DummyVersion
+	revision = buildinfo.DummyRevision
+	branch = buildinfo.DummyBranch
+	date = buildinfo.DummyDate
 )
 
 func main() {
 	bld := buildinfo.BuildInfo{
-		Version: version,
-		Date:    buildDate,
-		Branch:  gitBranch,
-		Commit:  gitCommit,
+		Version:  version,
+		Revision: revision,
+		Branch:   branch,
+		Date:     date,
 	}
 }
 ```
 
-Now build your program:
+Build your Go project and include the following _ldflags_:
 ```sh
 go build -ldflags="\
   -X main.version="git describe --tags" \
-  -X main.buildDate=`date +%FT%T%z` \
-  -X main.gitBranch=`git branch --show-current` \
-  -X main.gitCommit=`git rev-parse --short HEAD`" \
+  -X main.revision=`git rev-parse --short HEAD`" \
+  -X main.branch=`git branch --show-current` \
+  -X main.date=`date +%FT%T%z` \
   main.go
 ```
 
@@ -63,7 +63,7 @@ prometheus.MustRegister(prometheus.NewGaugeFunc(
         Namespace:   "myapp",
         Name:        buildinfo.MetricName,
         Help:        buildinfo.MetricHelp,
-        ConstLabels: bld.ToMap(),
+        ConstLabels: bld.Map(),
     },
     func() float64 { return 1 },
 ))

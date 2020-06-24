@@ -11,18 +11,18 @@ import (
 
 // these values are changed via ldflags when building a new release
 var (
-	version   = buildinfo.DummyVersion
-	buildDate = buildinfo.DummyDate
-	gitBranch = buildinfo.DummyBranch
-	gitCommit = buildinfo.DummyCommit
+	version  = buildinfo.DummyVersion
+	revision = buildinfo.DummyRevision
+	branch   = buildinfo.DummyBranch
+	date     = buildinfo.DummyDate
 )
 
 func main() {
 	buildInfo := buildinfo.BuildInfo{
-		Version: version,
-		Date:    buildDate,
-		Branch:  gitBranch,
-		Commit:  gitCommit,
+		Version:  version,
+		Revision: revision,
+		Branch:   branch,
+		Date:     date,
 	}
 
 	var displayBuildInfo bool

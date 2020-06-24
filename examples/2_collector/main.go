@@ -17,24 +17,24 @@ import (
 // building a new release.
 var (
 	version   = buildinfo.DummyVersion
-	buildDate = buildinfo.DummyDate
+	revision  = buildinfo.DummyRevision
 	gitBranch = buildinfo.DummyBranch
-	gitCommit = buildinfo.DummyCommit
+	buildDate = buildinfo.DummyDate
 )
 
 func main() {
 	buildInfo := buildinfo.BuildInfo{
-		Version: version,
-		Date:    buildDate,
-		Branch:  gitBranch,
-		Commit:  gitCommit,
+		Version:  version,
+		Revision: revision,
+		Branch:   gitBranch,
+		Date:     buildDate,
 	}
 	prometheus.MustRegister(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
 			Namespace:   "example2",
 			Name:        buildinfo.MetricName,
 			Help:        buildinfo.MetricHelp,
-			ConstLabels: buildInfo.ToMap(),
+			ConstLabels: buildInfo.Map(),
 		},
 		func() float64 { return 1 },
 	))
@@ -56,7 +56,7 @@ func main() {
 
 	fmt.Printf("\nThe web server is running on `http://localhost:%d`.\n", port)
 	fmt.Println("Visit it using your browser to see the build info metric in action.")
-	fmt.Println("\n  ", buildInfo.ToMap())
+	fmt.Println("\n  ", buildInfo.Map())
 	fmt.Println()
 
 	// listen for SIGINT or SIGKILL signals
