@@ -46,11 +46,11 @@ func main() {
 
 Build your Go project and include the following _ldflags_:
 ```sh
-go build -ldflags="\
-  -X main.version="git describe --tags" \
-  -X main.revision=`git rev-parse --short HEAD`" \
+go build -ldflags=" \
+  -X main.version=`git describe --tags` \
+  -X main.revision=`git rev-parse --short HEAD` \
   -X main.branch=`git branch --show-current` \
-  -X main.date=`date +%FT%T%z` \
+  -X main.date=`date +%FT%T%z`" \
   main.go
 ```
 
