@@ -32,9 +32,37 @@ type BuildInfo struct {
 func (bld BuildInfo) GoVersion() string { return runtime.Version() }
 
 // String returns the string representation of the build information.
-// It includes release version, revision and build date.
+// It always includes the release version. Other fields are omitted when empty.
+// Examples:
+//  - version only: `v8.0.0`
+//  - version and branch: `3.0.2 stable`
+//  - all without branch: `v8.5.0 (rev fedcba, date 2020-06-16 19:53)`
+//  - all: `1.0.1 dev (rev fedcba, date 1997-08-29 13:37:00)`
 func (bld BuildInfo) String() string {
-	return fmt.Sprintf("%s, #%s @ %s", bld.Version, bld.Revision, bld.Date)
+	branch := bld.Branch
+	if branch != "" {
+		branch = " " + branch
+	}
+
+	if bld.Revision == "" && bld.Date == "" {
+		return bld.Version + branch
+	}
+
+	var buf bytes.Buffer
+	if bld.Revision != "" {
+		buf.WriteString("rev ")
+		buf.WriteString(bld.Revision)
+	}
+	if bld.Date != "" {
+		if buf.Len() != 0 {
+			buf.WriteString(", ")
+		}
+
+		buf.WriteString("date ")
+		buf.WriteString(bld.Date)
+	}
+
+	return fmt.Sprintf("%s%s (%s)", bld.Version, branch, buf.String())
 }
 
 // Map returns the build information as a map. Field names are lowercase.
@@ -60,7 +88,7 @@ func (bld BuildInfo) Map() map[string]string {
 // MarshalJSON returns valid JSON output.
 // Empty fields within BuildInfo are omitted.
 func (bld BuildInfo) MarshalJSON() ([]byte, error) {
-	buf := bytes.Buffer{}
+	var buf bytes.Buffer
 	buf.WriteString(`{"version":"`)
 	buf.WriteString(bld.Version)
 
@@ -87,7 +115,7 @@ func (bld BuildInfo) MarshalJSON() ([]byte, error) {
 const (
 	DummyVersion  = "0.0.0"
 	DummyRevision = "abcdef"
-	DummyBranch   = "HEAD"
+	DummyBranch   = "dev"
 	DummyDate     = "1997-08-29 13:37:00"
 )
 

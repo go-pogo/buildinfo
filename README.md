@@ -2,22 +2,26 @@ go-buildinfo
 ============
 
 [![Latest release][latest-release-img]][latest-release-url]
-[![Build status][build-status-img]][build-status-url]
+[![Tests status][tests-status-img]][tests-status-url]
 [![Go Report Card][report-img]][report-url]
 [![Documentation][doc-img]][doc-url]
 
 [latest-release-img]: https://img.shields.io/github/release/roeldev/go-buildinfo.svg?label=latest
 [latest-release-url]: https://github.com/roeldev/go-buildinfo/releases
-[build-status-img]: https://github.com/roeldev/go-buildinfo/workflows/Go/badge.svg
-[build-status-url]: https://github.com/roeldev/go-buildinfo/actions?query=workflow%3AGo
+[tests-status-img]: https://github.com/roeldev/go-buildinfo/workflows/Run%20tests/badge.svg
+[tests-status-url]: https://github.com/roeldev/go-buildinfo/actions?query=workflow%3A%22Run+tests%22
 [report-img]: https://goreportcard.com/badge/github.com/roeldev/go-buildinfo
 [report-url]: https://goreportcard.com/report/github.com/roeldev/go-buildinfo
 [doc-img]: https://godoc.org/github.com/roeldev/go-buildinfo?status.svg
 [doc-url]: https://pkg.go.dev/github.com/roeldev/go-buildinfo
 
 
+This package provides an easy way to add build/version information to your application.
+By providing   
+Usage of the revision, branch and date fields is not mandatory but is recommended.
+
 ```sh
-go get github.com/roeldev/go-buildinfo
+go get -u github.com/roeldev/go-buildinfo
 ```
 ```go
 import "github.com/roeldev/go-buildinfo"
@@ -26,6 +30,10 @@ import "github.com/roeldev/go-buildinfo"
 ## Basic usage
 
 ```go
+package main
+
+import "github.com/roeldev/go-buildinfo"
+
 // these values are changed via ldflags when building a new release
 var (
 	version = buildinfo.DummyVersion
@@ -53,6 +61,9 @@ go build -ldflags=" \
   -X main.date=`date +%FT%T%z`" \
   main.go
 ```
+
+The resulting build info string is something like `v0.1.0 master (rev 328396d, date 1997-08-29 13:37:00)`.
+Any empty fields, but version, are ommitted. 
 
 
 ## Prometheus metric collector

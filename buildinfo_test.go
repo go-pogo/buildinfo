@@ -13,14 +13,28 @@ func TestBuildInfo_GoVersion(t *testing.T) {
 }
 
 func TestBuildInfo_String(t *testing.T) {
-	have := BuildInfo{
-		Version:  "v1.0.66",
-		Revision: "fedcba",
-		Branch:   "develop",
-		Date:     "2020-06-16 19:53",
-	}
-
-	assert.Exactly(t, "v1.0.66, #fedcba @ 2020-06-16 19:53", have.String())
+	t.Run("only version", func(t *testing.T) {
+		want := "v0.12.1"
+		assert.Exactly(t, want, BuildInfo{Version: want}.String())
+	})
+	t.Run("version and branch", func(t *testing.T) {
+		assert.Exactly(t, "3.0.2 stable", BuildInfo{Version: "3.0.2", Branch: "stable"}.String())
+	})
+	t.Run("no branch", func(t *testing.T) {
+		assert.Exactly(t, "v1.0.66 (rev fedcba, date 2020-06-16 19:53)", BuildInfo{
+			Version:  "v1.0.66",
+			Revision: "fedcba",
+			Date:     "2020-06-16 19:53",
+		}.String())
+	})
+	t.Run("all", func(t *testing.T) {
+		assert.Exactly(t, "v1.0.66 develop (rev fedcba, date 2020-06-16 19:53)", BuildInfo{
+			Version:  "v1.0.66",
+			Revision: "fedcba",
+			Branch:   "develop",
+			Date:     "2020-06-16 19:53",
+		}.String())
+	})
 }
 
 func TestBuildInfo_Map(t *testing.T) {
