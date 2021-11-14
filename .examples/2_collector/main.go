@@ -1,3 +1,7 @@
+// Copyright (c) 2020, Roel Schut. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -8,26 +12,24 @@ import (
 	"os/signal"
 	"strconv"
 
+	"github.com/go-pogo/buildinfo"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/roeldev/go-buildinfo"
 )
 
 // Default build-time variables. These values are changed via ldflags when
 // building a new release.
 var (
-	version   = buildinfo.DummyVersion
-	revision  = buildinfo.DummyRevision
-	gitBranch = buildinfo.DummyBranch
-	buildDate = buildinfo.DummyDate
+	version  = buildinfo.DummyVersion
+	revision = buildinfo.DummyRevision
+	date     = buildinfo.DummyDate
 )
 
 func main() {
 	buildInfo := buildinfo.BuildInfo{
 		Version:  version,
 		Revision: revision,
-		Branch:   gitBranch,
-		Date:     buildDate,
+		Date:     date,
 	}
 	prometheus.MustRegister(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{

@@ -1,3 +1,7 @@
+// Copyright (c) 2020, Roel Schut. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -6,14 +10,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/roeldev/go-buildinfo"
+	"github.com/go-pogo/buildinfo"
 )
 
 // these values are changed via ldflags when building a new release
 var (
 	version  = buildinfo.DummyVersion
 	revision = buildinfo.DummyRevision
-	branch   = buildinfo.DummyBranch
 	date     = buildinfo.DummyDate
 )
 
@@ -21,7 +24,6 @@ func main() {
 	buildInfo := buildinfo.BuildInfo{
 		Version:  version,
 		Revision: revision,
-		Branch:   branch,
 		Date:     date,
 	}
 
@@ -37,7 +39,7 @@ func main() {
 	}
 
 	if displayBuildInfo {
-		fmt.Println(buildInfo)
+		fmt.Println(buildInfo.String())
 		return
 	}
 
