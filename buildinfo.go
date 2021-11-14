@@ -4,8 +4,16 @@
 
 /*
 Package buildinfo provides basic building blocks and instructions to easily add
-build and release information to your app.
+build and release information to your app. This is done by replacing variables
+in main during build with ldflags.
 
+Usage
+
+Declare build info variables in your main package:
+
+	package main
+
+	// these values are changed via ldflags when building a new release
 	var (
 		version = buildinfo.DummyVersion
 		revision = buildinfo.DummyRevision
@@ -104,21 +112,21 @@ func (bld BuildInfo) Map() map[string]string {
 // Empty fields within BuildInfo are omitted.
 func (bld BuildInfo) MarshalJSON() ([]byte, error) {
 	var buf strings.Builder
-	buf.WriteString(`{"version":"`)
-	buf.WriteString(bld.Version)
+	_, _ = buf.WriteString(`{"version":"`)
+	_, _ = buf.WriteString(bld.Version)
 
 	if bld.Revision != "" {
-		buf.WriteString(`","revision":"`)
-		buf.WriteString(bld.Revision)
+		_, _ = buf.WriteString(`","revision":"`)
+		_, _ = buf.WriteString(bld.Revision)
 	}
 	if bld.Date != "" {
-		buf.WriteString(`","date":"`)
-		buf.WriteString(bld.Date)
+		_, _ = buf.WriteString(`","date":"`)
+		_, _ = buf.WriteString(bld.Date)
 	}
 
-	buf.WriteString(`","goversion":"`)
-	buf.WriteString(bld.GoVersion())
-	buf.WriteString(`"}`)
+	_, _ = buf.WriteString(`","goversion":"`)
+	_, _ = buf.WriteString(bld.GoVersion())
+	_, _ = buf.WriteString(`"}`)
 
 	return []byte(buf.String()), nil
 }
@@ -136,7 +144,7 @@ func (bld BuildInfo) String() string {
 	}
 
 	var buf strings.Builder
-	bld.WriteTo(&buf)
+	_, _ = bld.WriteTo(&buf)
 	return buf.String()
 }
 
@@ -144,23 +152,23 @@ func (bld BuildInfo) Format(s fmt.State, v rune) {
 	switch v {
 	case 'V':
 		if s.Flag('#') {
-			bld.WriteTo(s)
+			_, _ = bld.WriteTo(s)
 		} else {
-			s.Write([]byte(bld.Version))
+			_, _ = s.Write([]byte(bld.Version))
 		}
 
 	case 'R':
 		if bld.Revision != "" {
-			s.Write([]byte(bld.Revision))
+			_, _ = s.Write([]byte(bld.Revision))
 		}
 
 	case 'D':
 		if bld.Date != "" {
-			s.Write([]byte(bld.Date))
+			_, _ = s.Write([]byte(bld.Date))
 		}
 
 	case 'G':
-		s.Write([]byte(bld.GoVersion()))
+		_, _ = s.Write([]byte(bld.GoVersion()))
 	}
 }
 
@@ -169,16 +177,16 @@ func (bld BuildInfo) Format(s fmt.State, v rune) {
 // encountered during writing is ignored.
 func (bld BuildInfo) WriteTo(w io.Writer) (int64, error) {
 	c := countingWriter{target: w}
-	c.Write([]byte(bld.Version))
+	_, _ = c.Write([]byte(bld.Version))
 
 	if bld.Revision != "" {
-		c.Write([]byte(" (" + bld.Revision))
+		_, _ = c.Write([]byte(" (" + bld.Revision))
 		if bld.Date != "" {
-			c.Write([]byte(" @ " + bld.Date))
+			_, _ = c.Write([]byte(" @ " + bld.Date))
 		}
-		c.Write([]byte(")"))
+		_, _ = c.Write([]byte(")"))
 	} else if bld.Date != "" {
-		c.Write([]byte(" (" + bld.Date + ")"))
+		_, _ = c.Write([]byte(" (" + bld.Date + ")"))
 	}
 
 	return c.size, nil
