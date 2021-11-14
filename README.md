@@ -75,12 +75,12 @@ prometheus.MustRegister(prometheus.NewGaugeFunc(
 ```
 
 ## Documentation
-Additional detailed documentation is available at [go.dev][doc-url]
+Additional detailed documentation is available at [pkg.go.dev][doc-url]
 
-
-### Created with
+## Created with
 <a href="https://www.jetbrains.com/?from=go-pogo" target="_blank"><img src="https://pbs.twimg.com/profile_images/1206615658638856192/eiS7UWLo_400x400.jpg" width="35" /></a>
 
-
 ## License
-[GPL-3.0+](LICENSE) © 2020 [Roel Schut](https://roelschut.nl)
+Copyright © 2020 [Roel Schut](https://roelschut.nl). All rights reserved.
+
+This project is governed by a BSD-style license that can be found in the [LICENSE](LICENSE) file.
