@@ -32,27 +32,17 @@ Declare build info variables in your main package:
 ```
 package main
 
-// these values are changed via ldflags when building a new release
-var (
-    version = buildinfo.DummyVersion
-    revision = buildinfo.DummyRevision
-    date = buildinfo.DummyDate
-)
+// this value is changed via ldflags when building a new release
+var version
 
 func main() {
-    bld := buildinfo.BuildInfo{
-        Version:  version,
-        Revision: revision,
-        Date:     date,
-    }
+    bld := buildinfo.New(version)
 }
 ```
 Build your Go project and include the following `ldflags`:
 ```
 go build -ldflags=" \
   -X main.version=`$(git describe --tags)` \
-  -X main.revision=`$(git rev-parse --short HEAD)` \
-  -X main.date=`$(date +%FT%T%z`)" \
   main.go
 ```
 
@@ -78,9 +68,9 @@ prometheus.MustRegister(prometheus.NewGaugeFunc(
 Additional detailed documentation is available at [pkg.go.dev][doc-url]
 
 ## Created with
-<a href="https://www.jetbrains.com/?from=go-pogo" target="_blank"><img src="https://pbs.twimg.com/profile_images/1206615658638856192/eiS7UWLo_400x400.jpg" width="35" /></a>
+<a href="https://www.jetbrains.com/?from=go-pogo" target="_blank"><img src="https://resources.jetbrains.com/storage/products/company/brand/logos/GoLand_icon.png" width="35" /></a>
 
 ## License
-Copyright © 2020 [Roel Schut](https://roelschut.nl). All rights reserved.
+Copyright © 2020-2022 [Roel Schut](https://roelschut.nl). All rights reserved.
 
 This project is governed by a BSD-style license that can be found in the [LICENSE](LICENSE) file.
