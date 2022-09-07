@@ -1,15 +1,27 @@
+// Copyright (c) 2020, Roel Schut. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package buildinfo
 
 import (
-	"encoding/json"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
+var goVersion = runtime.Version()
+
+func TestNew(t *testing.T) {
+	have := New("v1.2.3")
+	want := &BuildInfo{Version: "v1.2.3", goVersion: goVersion}
+	assert.Exactly(t, want, have)
+}
+
 func TestBuildInfo_GoVersion(t *testing.T) {
-	assert.Exactly(t, runtime.Version(), new(BuildInfo).GoVersion())
+	assert.Exactly(t, goVersion, new(BuildInfo).GoVersion())
 }
 
 func TestBuildInfo_String(t *testing.T) {
@@ -28,20 +40,20 @@ func TestBuildInfo_String(t *testing.T) {
 			},
 			want: "v1.0.66 (fedcba)",
 		},
-		"version and date": {
+		"version and time": {
 			input: BuildInfo{
 				Version: "0.0.2-rc1",
-				Date:    "2020-06-16 19:53",
+				Time:    time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 			},
-			want: "0.0.2-rc1 (2020-06-16 19:53)",
+			want: "0.0.2-rc1 (2020-06-16T19:53:00Z)",
 		},
 		"all": {
 			input: BuildInfo{
 				Version:  "v1.0.66",
 				Revision: "fedcba",
-				Date:     "2020-06-16 19:53",
+				Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 			},
-			want: "v1.0.66 (fedcba @ 2020-06-16 19:53)",
+			want: "v1.0.66 (fedcba @ 2020-06-16T19:53:00Z)",
 		},
 	}
 	for name, tc := range tests {
@@ -55,54 +67,49 @@ func TestBuildInfo_Map(t *testing.T) {
 	have := BuildInfo{
 		Version:  "v1.0.66",
 		Revision: "fedcba",
-		Date:     DummyDate,
+		Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 	}
 
 	want := map[string]string{
 		"version":   "v1.0.66",
 		"revision":  "fedcba",
-		"date":      DummyDate,
-		"goversion": runtime.Version(),
+		"time":      "2020-06-16T19:53:00Z",
+		"goversion": goVersion,
 	}
 	assert.Exactly(t, want, have.Map())
 }
 
 func TestBuildInfo_MarshalJSON(t *testing.T) {
-	tests := map[string]BuildInfo{
-		"empty":   {},
-		"partial": {Version: DummyVersion, Date: DummyDate},
+	tests := map[string]struct {
+		input BuildInfo
+		want  string
+	}{
+		"empty": {
+			want: `{"version":"","goversion":"` + goVersion + `"}`,
+		},
+		"partial": {
+			input: BuildInfo{
+				Version: "v0.66",
+				Time:    time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+			},
+			want: `{"version":"v0.66","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
+		},
 		"full": {
-			Version:  DummyVersion,
-			Revision: DummyRevision,
-			Date:     DummyDate,
+			input: BuildInfo{
+				Version:  "v0.66",
+				Revision: "abcdefghi",
+				Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+			},
+			want: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
 		},
 	}
 
-	for name, bld := range tests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			haveBytes, haveErr := bld.MarshalJSON()
-			wantBytes, wantErr := json.Marshal(struct {
-				Version   string `json:"version"`
-				Revision  string `json:"revision,omitempty"`
-				Date      string `json:"date,omitempty"`
-				GoVersion string `json:"goversion"`
-			}{bld.Version, bld.Revision, bld.Date, bld.GoVersion()})
+			haveBytes, haveErr := tc.input.MarshalJSON()
 
-			assert.Exactly(t, wantBytes, haveBytes)
-			assert.Exactly(t, wantErr, haveErr)
+			assert.Exactly(t, []byte(tc.want), haveBytes)
+			assert.Nil(t, haveErr)
 		})
 	}
-}
-
-func TestIsDummy(t *testing.T) {
-	t.Run("true", func(t *testing.T) {
-		assert.True(t, IsDummy(BuildInfo{
-			Version:  DummyVersion,
-			Revision: DummyRevision,
-			Date:     DummyDate,
-		}))
-	})
-	t.Run("false", func(t *testing.T) {
-		assert.False(t, IsDummy(BuildInfo{}))
-	})
 }
