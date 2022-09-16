@@ -52,6 +52,9 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/go-pogo/errors"
+	"github.com/go-pogo/writing"
 )
 
 //goland:noinspection GoUnusedConst
@@ -113,6 +116,12 @@ func (bld *BuildInfo) MarshalJSON() ([]byte, error) {
 	var buf strings.Builder
 	bld.writeJson(&buf)
 	return []byte(buf.String()), nil
+}
+
+func HttpHandler(bld *BuildInfo) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		bld.writeJson(writing.ToStringWriter(w))
+	})
 }
 
 func (bld *BuildInfo) writeJson(w io.StringWriter) {
@@ -178,59 +187,22 @@ func (bld *BuildInfo) Format(s fmt.State, v rune) {
 // String, to w. The return value is the number of bytes written. Any error
 // encountered during writing is ignored.
 func (bld *BuildInfo) WriteTo(w io.Writer) (int64, error) {
-	cw := countingWriter{target: stringWriter(w)}
-	cw.write(bld.Version)
+	cw := writing.ToCountingStringWriter(w)
+	_, _ = cw.WriteString(bld.Version)
 
 	if bld.Revision != "" {
-		cw.write(" (")
-		cw.write(bld.Revision)
+		_, _ = cw.WriteString(" (")
+		_, _ = cw.WriteString(bld.Revision)
 		if !bld.Time.IsZero() {
-			cw.write(" @ ")
-			cw.write(bld.Time.Format(time.RFC3339))
+			_, _ = cw.WriteString(" @ ")
+			_, _ = cw.WriteString(bld.Time.Format(time.RFC3339))
 		}
-		cw.write(")")
+		_, _ = cw.WriteString(")")
 	} else if !bld.Time.IsZero() {
-		cw.write(" (")
-		cw.write(bld.Time.Format(time.RFC3339))
-		cw.write(")")
+		_, _ = cw.WriteString(" (")
+		_, _ = cw.WriteString(bld.Time.Format(time.RFC3339))
+		_, _ = cw.WriteString(")")
 	}
 
-	return int64(cw.size), nil
-}
-
-func HttpHandler(bld *BuildInfo) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		bld.writeJson(stringWriter(w))
-	})
-}
-
-func stringWriter(w io.Writer) io.StringWriter {
-	if sw, ok := w.(io.StringWriter); ok {
-		return sw
-	} else {
-		return &wrappedWriter{w}
-	}
-}
-
-type wrappedWriter struct {
-	io.Writer
-}
-
-func (w *wrappedWriter) WriteString(s string) (int, error) {
-	return w.Writer.Write([]byte(s))
-}
-
-type countingWriter struct {
-	target io.StringWriter
-	size   int
-	errs   []error
-}
-
-func (cw *countingWriter) write(s string) {
-	n, err := cw.target.WriteString(s)
-	if err != nil {
-		cw.errs = append(cw.errs, err)
-	}
-
-	cw.size += n
+	return int64(cw.Count()), errors.Combine(cw.Errors()...)
 }
