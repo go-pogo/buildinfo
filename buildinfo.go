@@ -165,21 +165,21 @@ func (bld *BuildInfo) Format(s fmt.State, v rune) {
 		if s.Flag('#') {
 			_, _ = bld.WriteTo(s)
 		} else {
-			_, _ = s.Write([]byte(bld.Version))
+			_, _ = io.WriteString(s, bld.Version)
 		}
 
 	case 'R':
 		if bld.Revision != "" {
-			_, _ = s.Write([]byte(bld.Revision))
+			_, _ = io.WriteString(s, bld.Revision)
 		}
 
 	case 'D':
 		if !bld.Time.IsZero() {
-			_, _ = s.Write([]byte(bld.Time.Format(time.RFC3339)))
+			_, _ = io.WriteString(s, bld.Time.Format(time.RFC3339))
 		}
 
 	case 'G':
-		_, _ = s.Write([]byte(bld.GoVersion()))
+		_, _ = io.WriteString(s, bld.GoVersion())
 	}
 }
 
