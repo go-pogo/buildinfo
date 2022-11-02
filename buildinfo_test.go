@@ -5,6 +5,7 @@
 package buildinfo
 
 import (
+	"net/http/httptest"
 	"runtime"
 	"testing"
 	"time"
@@ -79,37 +80,47 @@ func TestBuildInfo_Map(t *testing.T) {
 	assert.Exactly(t, want, have.Map())
 }
 
-func TestBuildInfo_MarshalJSON(t *testing.T) {
-	tests := map[string]struct {
-		input BuildInfo
-		want  string
-	}{
-		"empty": {
-			want: `{"version":"","goversion":"` + goVersion + `"}`,
+var jsonTests = map[string]struct {
+	input BuildInfo
+	want  string
+}{
+	"empty": {
+		want: `{"version":"","goversion":"` + goVersion + `"}`,
+	},
+	"partial": {
+		input: BuildInfo{
+			Version: "v0.66",
+			Time:    time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 		},
-		"partial": {
-			input: BuildInfo{
-				Version: "v0.66",
-				Time:    time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
-			},
-			want: `{"version":"v0.66","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
+		want: `{"version":"v0.66","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
+	},
+	"full": {
+		input: BuildInfo{
+			Version:  "v0.66",
+			Revision: "abcdefghi",
+			Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 		},
-		"full": {
-			input: BuildInfo{
-				Version:  "v0.66",
-				Revision: "abcdefghi",
-				Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
-			},
-			want: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
-		},
-	}
+		want: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
+	},
+}
 
-	for name, tc := range tests {
+func TestBuildInfo_MarshalJSON(t *testing.T) {
+	for name, tc := range jsonTests {
 		t.Run(name, func(t *testing.T) {
 			haveBytes, haveErr := tc.input.MarshalJSON()
 
 			assert.Exactly(t, []byte(tc.want), haveBytes)
 			assert.Nil(t, haveErr)
+		})
+	}
+}
+
+func TestHttpHandler(t *testing.T) {
+	for name, tc := range jsonTests {
+		t.Run(name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			HttpHandler(&tc.input).ServeHTTP(rec, nil)
+			assert.Exactly(t, []byte(tc.want), rec.Body.Bytes())
 		})
 	}
 }

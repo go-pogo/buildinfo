@@ -118,12 +118,6 @@ func (bld *BuildInfo) MarshalJSON() ([]byte, error) {
 	return []byte(buf.String()), nil
 }
 
-func HttpHandler(bld *BuildInfo) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		bld.writeJson(writing.ToStringWriter(w))
-	})
-}
-
 func (bld *BuildInfo) writeJson(w io.StringWriter) {
 	_, _ = w.WriteString(`{"version":"`)
 	_, _ = w.WriteString(bld.Version)
@@ -205,4 +199,12 @@ func (bld *BuildInfo) WriteTo(w io.Writer) (int64, error) {
 	}
 
 	return int64(cw.Count()), errors.Combine(cw.Errors()...)
+}
+
+// HttpHandler is the http.Handler that writes BuildInfo bld as a json response
+// to the received request.
+func HttpHandler(bld *BuildInfo) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		bld.writeJson(writing.ToStringWriter(w))
+	})
 }
