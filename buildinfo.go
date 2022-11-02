@@ -2,47 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-/*
-Package buildinfo provides basic building blocks and instructions to easily add
-build and release information to your app. This is done by replacing variables
-in main during build with ldflags.
-
-# Usage
-
-Declare build info variables in your main package:
-
-	package main
-
-	// this value is changed via ldflags when building a new release
-	var version
-
-	func main() {
-		bld := buildinfo.New(version)
-	}
-
-Build your Go project and include the following ldflags:
-
-	go build -ldflags=" \
-	  -X main.version=`$(git describe --tags)` \
-	  main.go
-
-# Prometheus metric collector
-
-When using a metrics scraper like Prometheus, it is often a good idea to make
-the build information of your app available. Below example shows just how easy
-it is to create and register a collector with the build information as
-constant labels.
-
-	prometheus.MustRegister(prometheus.NewGaugeFunc(
-	    prometheus.GaugeOpts{
-	        Namespace:   "myapp",
-	        Name:        buildinfo.MetricName,
-	        Help:        buildinfo.MetricHelp,
-	        ConstLabels: bld.Map(),
-	    },
-	    func() float64 { return 1 },
-	))
-*/
 package buildinfo
 
 import (
@@ -85,6 +44,7 @@ type BuildInfo struct {
 	Time time.Time
 }
 
+// GoVersion returns the Go runtime version used to make the current build.
 func (bld *BuildInfo) GoVersion() string {
 	if bld.goVersion == "" {
 		bld.goVersion = runtime.Version()
@@ -139,10 +99,10 @@ func (bld *BuildInfo) writeJson(w io.StringWriter) {
 // String returns the string representation of the build information.
 // It always includes the release version. Other fields are omitted when empty.
 // Examples:
-//   - version only: `v8.0.0`
-//   - version and revision `v8.5.0 (fedcba)`
-//   - version and date: `v8.5.0 (2020-06-16 19:53)`
-//   - all: `v8.5.0 (fedcba @ 2020-06-16 19:53)`
+//   - version only: `8.5.0`
+//   - version and revision `8.5.0 (fedcba)`
+//   - version and date: `8.5.0 (2020-06-16 19:53)`
+//   - all: `8.5.0 (fedcba @ 2020-06-16 19:53)`
 func (bld *BuildInfo) String() string {
 	if bld.Revision == "" && bld.Time.IsZero() {
 		return bld.Version
