@@ -7,12 +7,19 @@ buildinfo
 [![Documentation][doc-img]][doc-url]
 
 [latest-release-img]: https://img.shields.io/github/release/go-pogo/buildinfo.svg?label=latest
+
 [latest-release-url]: https://github.com/go-pogo/buildinfo/releases
+
 [build-status-img]: https://github.com/go-pogo/buildinfo/workflows/Test/badge.svg
-[build-status-url]: https://github.com/go-pogo/buildinfo/actions?query=workflow%3Test
+
+[build-status-url]: https://github.com/go-pogo/buildinfo/actions/workflows/test.yml
+
 [report-img]: https://goreportcard.com/badge/github.com/go-pogo/buildinfo
+
 [report-url]: https://goreportcard.com/report/github.com/go-pogo/buildinfo
+
 [doc-img]: https://godoc.org/github.com/go-pogo/buildinfo?status.svg
+
 [doc-url]: https://pkg.go.dev/github.com/go-pogo/buildinfo
 
 Package `buildinfo` provides basic building blocks and instructions to easily add
@@ -22,6 +29,7 @@ in main during build with `ldflags`.
 ```sh
 go get github.com/go-pogo/buildinfo
 ```
+
 ```go
 import "github.com/go-pogo/buildinfo"
 ```
@@ -29,6 +37,7 @@ import "github.com/go-pogo/buildinfo"
 ## Usage
 
 Declare build info variables in your main package:
+
 ```
 package main
 
@@ -39,7 +48,9 @@ func main() {
     bld := buildinfo.New(version)
 }
 ```
+
 Build your Go project and include the following `ldflags`:
+
 ```
 go build -ldflags=" \
   -X main.version=`$(git describe --tags)` \
@@ -52,6 +63,7 @@ When using a metrics scraper like Prometheus, it is often a good idea to make
 the build information of your app available. Below example shows just how easy
 it is to create and register a collector with the build information as
 constant labels.
+
 ```
 prometheus.MustRegister(prometheus.NewGaugeFunc(
     prometheus.GaugeOpts{
@@ -65,12 +77,15 @@ prometheus.MustRegister(prometheus.NewGaugeFunc(
 ```
 
 ## Documentation
+
 Additional detailed documentation is available at [pkg.go.dev][doc-url]
 
 ## Created with
+
 <a href="https://www.jetbrains.com/?from=go-pogo" target="_blank"><img src="https://resources.jetbrains.com/storage/products/company/brand/logos/GoLand_icon.png" width="35" /></a>
 
 ## License
+
 Copyright © 2020-2022 [Roel Schut](https://roelschut.nl). All rights reserved.
 
 This project is governed by a BSD-style license that can be found in the [LICENSE](LICENSE) file.
