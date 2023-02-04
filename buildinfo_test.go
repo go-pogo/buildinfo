@@ -21,6 +21,29 @@ func TestNew(t *testing.T) {
 	assert.Exactly(t, want, have)
 }
 
+func TestBuildInfo_WithExtra(t *testing.T) {
+	t.Run("add value", func(t *testing.T) {
+		var bi BuildInfo
+		bi.WithExtra("foo", "bar")
+		assert.Exactly(t, map[string]string{"foo": "bar"}, bi.Extra)
+	})
+
+	reserved := []string{
+		keyVersion,
+		keyGoversion,
+		keyRevision,
+		keyTime,
+	}
+	for _, key := range reserved {
+		t.Run("panic on reserved key "+key, func(t *testing.T) {
+			assert.Panics(t, func() {
+				var bi BuildInfo
+				bi.WithExtra(key, "some value")
+			})
+		})
+	}
+}
+
 func TestBuildInfo_GoVersion(t *testing.T) {
 	assert.Exactly(t, goVersion, new(BuildInfo).GoVersion())
 }
@@ -64,35 +87,26 @@ func TestBuildInfo_String(t *testing.T) {
 	}
 }
 
-func TestBuildInfo_Map(t *testing.T) {
-	have := BuildInfo{
-		Version:  "v1.0.66",
-		Revision: "fedcba",
-		Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
-	}
-
-	want := map[string]string{
-		"version":   "v1.0.66",
-		"revision":  "fedcba",
-		"time":      "2020-06-16T19:53:00Z",
-		"goversion": goVersion,
-	}
-	assert.Exactly(t, want, have.Map())
-}
-
-var jsonTests = map[string]struct {
-	input BuildInfo
-	want  string
+var tests = map[string]struct {
+	input    BuildInfo
+	wantMap  map[string]string
+	wantJson string
 }{
 	"empty": {
-		want: `{"version":"","goversion":"` + goVersion + `"}`,
+		wantMap:  map[string]string{"version": EmptyVersion, "goversion": goVersion},
+		wantJson: `{"version":"` + EmptyVersion + `","goversion":"` + goVersion + `"}`,
 	},
 	"partial": {
 		input: BuildInfo{
 			Version: "v0.66",
 			Time:    time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 		},
-		want: `{"version":"v0.66","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
+		wantMap: map[string]string{
+			"version":   "v0.66",
+			"goversion": goVersion,
+			"time":      "2020-06-16T19:53:00Z",
+		},
+		wantJson: `{"version":"v0.66","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
 	},
 	"full": {
 		input: BuildInfo{
@@ -100,27 +114,61 @@ var jsonTests = map[string]struct {
 			Revision: "abcdefghi",
 			Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 		},
-		want: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
+		wantMap: map[string]string{
+			"version":   "v0.66",
+			"goversion": goVersion,
+			"revision":  "abcdefghi",
+			"time":      "2020-06-16T19:53:00Z",
+		},
+		wantJson: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
+	},
+	"extras": {
+		input: BuildInfo{
+			Version:  "v0.66",
+			Revision: "abcdefghi",
+			Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+			Extra: map[string]string{
+				"foo": "bar",
+				"qux": "xoo",
+			},
+		},
+		wantMap: map[string]string{
+			"version":   "v0.66",
+			"goversion": goVersion,
+			"revision":  "abcdefghi",
+			"time":      "2020-06-16T19:53:00Z",
+			"foo":       "bar",
+			"qux":       "xoo",
+		},
+		wantJson: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `","foo":"bar","qux":"xoo"}`,
 	},
 }
 
+func TestBuildInfo_Map(t *testing.T) {
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Exactly(t, tc.wantMap, tc.input.Map())
+		})
+	}
+}
+
 func TestBuildInfo_MarshalJSON(t *testing.T) {
-	for name, tc := range jsonTests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			haveBytes, haveErr := tc.input.MarshalJSON()
 
-			assert.Exactly(t, []byte(tc.want), haveBytes)
+			assert.Exactly(t, []byte(tc.wantJson), haveBytes)
 			assert.Nil(t, haveErr)
 		})
 	}
 }
 
 func TestHttpHandler(t *testing.T) {
-	for name, tc := range jsonTests {
+	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
 			HttpHandler(&tc.input).ServeHTTP(rec, nil)
-			assert.Exactly(t, []byte(tc.want), rec.Body.Bytes())
+			assert.Exactly(t, []byte(tc.wantJson), rec.Body.Bytes())
 		})
 	}
 }

@@ -30,7 +30,15 @@ const (
 
 	// Route is the default path for a http handler.
 	Route = "/version"
+
+	// reserved keys
+	keyVersion   = "version"
+	keyGoversion = "goversion"
+	keyRevision  = "revision"
+	keyTime      = "time"
 )
+
+var EmptyVersion = "0.0.0"
 
 // BuildInfo contains the relevant information of the current release's build
 // version, revision and build date.
@@ -42,6 +50,30 @@ type BuildInfo struct {
 	Revision string
 	// Time of when the release was build.
 	Time time.Time
+	// Extra additional information to show.
+	Extra map[string]string
+}
+
+const panicReservedKey = "buildinfo: cannot add reserved key "
+
+// WithExtra adds an extra key value pair.
+func (bld *BuildInfo) WithExtra(key, value string) *BuildInfo {
+	if key == keyVersion || key == keyGoversion || key == keyRevision || key == keyTime {
+		panic(panicReservedKey + key)
+	}
+	if bld.Extra == nil {
+		bld.Extra = make(map[string]string, 2)
+	}
+
+	bld.Extra[key] = value
+	return bld
+}
+
+func (bld *BuildInfo) version() string {
+	if bld.Version == "" {
+		return EmptyVersion
+	}
+	return bld.Version
 }
 
 // GoVersion returns the Go runtime version used to make the current build.
@@ -55,17 +87,20 @@ func (bld *BuildInfo) GoVersion() string {
 // Map returns the build information as a map. Field names are lowercase.
 // Empty fields within BuildInfo are omitted.
 func (bld *BuildInfo) Map() map[string]string {
-	m := make(map[string]string, 5)
-	m["version"] = bld.Version
+	m := make(map[string]string, 5+len(bld.Extra))
+	m[keyVersion] = bld.version()
+	m[keyGoversion] = bld.GoVersion()
 
 	if bld.Revision != "" {
-		m["revision"] = bld.Revision
+		m[keyRevision] = bld.Revision
 	}
 	if !bld.Time.IsZero() {
-		m["time"] = bld.Time.Format(time.RFC3339)
+		m[keyTime] = bld.Time.Format(time.RFC3339)
 	}
 
-	m["goversion"] = bld.GoVersion()
+	for key, val := range bld.Extra {
+		m[key] = val
+	}
 	return m
 }
 
@@ -80,7 +115,7 @@ func (bld *BuildInfo) MarshalJSON() ([]byte, error) {
 
 func (bld *BuildInfo) writeJson(w io.StringWriter) {
 	_, _ = w.WriteString(`{"version":"`)
-	_, _ = w.WriteString(bld.Version)
+	_, _ = w.WriteString(bld.version())
 
 	if bld.Revision != "" {
 		_, _ = w.WriteString(`","revision":"`)
@@ -93,6 +128,14 @@ func (bld *BuildInfo) writeJson(w io.StringWriter) {
 
 	_, _ = w.WriteString(`","goversion":"`)
 	_, _ = w.WriteString(bld.GoVersion())
+
+	for key, val := range bld.Extra {
+		_, _ = w.WriteString(`","`)
+		_, _ = w.WriteString(key)
+		_, _ = w.WriteString(`":"`)
+		_, _ = w.WriteString(val)
+	}
+
 	_, _ = w.WriteString(`"}`)
 }
 
@@ -105,7 +148,7 @@ func (bld *BuildInfo) writeJson(w io.StringWriter) {
 //   - all: `8.5.0 (fedcba @ 2020-06-16 19:53)`
 func (bld *BuildInfo) String() string {
 	if bld.Revision == "" && bld.Time.IsZero() {
-		return bld.Version
+		return bld.version()
 	}
 
 	var buf strings.Builder
@@ -119,7 +162,7 @@ func (bld *BuildInfo) Format(s fmt.State, v rune) {
 		if s.Flag('#') {
 			_, _ = bld.WriteTo(s)
 		} else {
-			_, _ = io.WriteString(s, bld.Version)
+			_, _ = io.WriteString(s, bld.version())
 		}
 
 	case 'R':
@@ -142,7 +185,7 @@ func (bld *BuildInfo) Format(s fmt.State, v rune) {
 // encountered during writing is ignored.
 func (bld *BuildInfo) WriteTo(w io.Writer) (int64, error) {
 	cw := writing.ToCountingStringWriter(w)
-	_, _ = cw.WriteString(bld.Version)
+	_, _ = cw.WriteString(bld.version())
 
 	if bld.Revision != "" {
 		_, _ = cw.WriteString(" (")
@@ -158,7 +201,7 @@ func (bld *BuildInfo) WriteTo(w io.Writer) (int64, error) {
 		_, _ = cw.WriteString(")")
 	}
 
-	return int64(cw.Count()), errors.Combine(cw.Errors()...)
+	return int64(cw.Count()), errors.Join(cw.Errors()...)
 }
 
 // HttpHandler is the http.Handler that writes BuildInfo bld as a json response
