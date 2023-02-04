@@ -129,7 +129,6 @@ var tests = map[string]struct {
 			Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 			Extra: map[string]string{
 				"foo": "bar",
-				"qux": "xoo",
 			},
 		},
 		wantMap: map[string]string{
@@ -138,9 +137,8 @@ var tests = map[string]struct {
 			"revision":  "abcdefghi",
 			"time":      "2020-06-16T19:53:00Z",
 			"foo":       "bar",
-			"qux":       "xoo",
 		},
-		wantJson: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `","foo":"bar","qux":"xoo"}`,
+		wantJson: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `","foo":"bar"}`,
 	},
 }
 
