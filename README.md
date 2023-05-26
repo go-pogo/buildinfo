@@ -10,7 +10,7 @@ buildinfo
 
 [latest-release-url]: https://github.com/go-pogo/buildinfo/releases
 
-[build-status-img]: https://github.com/go-pogo/buildinfo/workflows/Test/badge.svg
+[build-status-img]: https://github.com/go-pogo/buildinfo/actions/workflows/test.yml/badge.svg
 
 [build-status-url]: https://github.com/go-pogo/buildinfo/actions/workflows/test.yml
 
