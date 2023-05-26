@@ -11,9 +11,6 @@ import (
 	"runtime"
 )
 
-func New(ver string) *BuildInfo {
-	return &BuildInfo{
-		goVersion: runtime.Version(),
-		Version:   ver,
-	}
+func (bld *BuildInfo) init() {
+	bld.goVersion = runtime.Version()
 }

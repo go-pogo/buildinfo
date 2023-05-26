@@ -62,7 +62,7 @@ func TestBuildInfo_String(t *testing.T) {
 				Version:  "v1.0.66",
 				Revision: "fedcba",
 			},
-			want: "v1.0.66 (fedcba)",
+			want: "v1.0.66 fedcba",
 		},
 		"version and time": {
 			input: BuildInfo{
@@ -77,7 +77,7 @@ func TestBuildInfo_String(t *testing.T) {
 				Revision: "fedcba",
 				Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 			},
-			want: "v1.0.66 (fedcba @ 2020-06-16T19:53:00Z)",
+			want: "v1.0.66 fedcba (2020-06-16T19:53:00Z)",
 		},
 	}
 	for name, tc := range tests {

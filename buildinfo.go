@@ -5,9 +5,11 @@
 package buildinfo
 
 import (
-	"fmt"
+	"encoding/json"
 	"io"
+	"io/fs"
 	"net/http"
+	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -38,6 +40,11 @@ const (
 	keyTime      = "time"
 )
 
+func isReservedKey(key string) bool {
+	return key == keyVersion || key == keyGoversion || key == keyRevision || key == keyTime
+}
+
+// EmptyVersion is the default version string when no version is set.
 var EmptyVersion = "0.0.0"
 
 // BuildInfo contains the relevant information of the current release's build
@@ -54,19 +61,61 @@ type BuildInfo struct {
 	Extra map[string]string
 }
 
+// New creates a new *BuildInfo with the given version string.
+func New(ver string) *BuildInfo {
+	bld := &BuildInfo{Version: ver}
+	bld.init()
+	return bld
+}
+
+// Read reads from io.Reader r and json unmarshalls it's content into a new
+// BuildInfo.
+func Read(r io.Reader) (*BuildInfo, error) {
+	var bld BuildInfo
+	bld.init()
+
+	if err := json.NewDecoder(r).Decode(&bld); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &bld, nil
+}
+
+// Open the file, then read and decode its contents using Read.
+func Open(file string) (*BuildInfo, error) {
+	return OpenFS(os.DirFS(""), file)
+}
+
+// OpenFS opens file from fsys. It then reads and decodes its contents using
+// Read.
+func OpenFS(fsys fs.FS, file string) (*BuildInfo, error) {
+	f, err := fsys.Open(file)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	defer f.Close()
+	return Read(f)
+}
+
 const panicReservedKey = "buildinfo: cannot add reserved key "
 
 // WithExtra adds an extra key value pair.
 func (bld *BuildInfo) WithExtra(key, value string) *BuildInfo {
-	if key == keyVersion || key == keyGoversion || key == keyRevision || key == keyTime {
+	if isReservedKey(key) {
 		panic(panicReservedKey + key)
 	}
+
+	bld.withExtra(key, value)
+	return bld
+}
+
+func (bld *BuildInfo) withExtra(key, value string) {
 	if bld.Extra == nil {
 		bld.Extra = make(map[string]string, 2)
 	}
 
 	bld.Extra[key] = value
-	return bld
 }
 
 func (bld *BuildInfo) version() string {
@@ -99,10 +148,44 @@ func (bld *BuildInfo) Map() map[string]string {
 	}
 
 	for key, val := range bld.Extra {
-		m[key] = val
+		if !isReservedKey(key) {
+			m[key] = val
+		}
 	}
 	return m
 }
+
+// String returns the string representation of the build information.
+// It always includes the release version. Other fields are omitted when empty.
+// Examples:
+//   - version only: `8.5.0`
+//   - version and revision `8.5.0 (#fedcba)`
+//   - version and date: `8.5.0 (2020-06-16 19:53)`
+//   - all: `8.5.0 (#fedcba @ 2020-06-16 19:53)`
+func (bld *BuildInfo) String() string {
+	if bld.Revision == "" && bld.Time.IsZero() {
+		return bld.version()
+	}
+
+	var buf strings.Builder
+	_, _ = buf.WriteString(bld.version())
+
+	if bld.Revision != "" {
+		_, _ = buf.WriteRune(' ')
+		_, _ = buf.WriteString(bld.Revision)
+	}
+	if !bld.Time.IsZero() {
+		_, _ = buf.WriteString(" (")
+		_, _ = buf.WriteString(bld.Time.Format(time.RFC3339))
+		_, _ = buf.WriteString(")")
+	}
+	return buf.String()
+}
+
+var (
+	_ json.Marshaler   = new(BuildInfo)
+	_ json.Unmarshaler = new(BuildInfo)
+)
 
 // MarshalJSON returns valid JSON output.
 // Empty fields within BuildInfo are omitted.
@@ -139,69 +222,31 @@ func (bld *BuildInfo) writeJson(w io.StringWriter) {
 	_, _ = w.WriteString(`"}`)
 }
 
-// String returns the string representation of the build information.
-// It always includes the release version. Other fields are omitted when empty.
-// Examples:
-//   - version only: `8.5.0`
-//   - version and revision `8.5.0 (fedcba)`
-//   - version and date: `8.5.0 (2020-06-16 19:53)`
-//   - all: `8.5.0 (fedcba @ 2020-06-16 19:53)`
-func (bld *BuildInfo) String() string {
-	if bld.Revision == "" && bld.Time.IsZero() {
-		return bld.version()
+func (bld *BuildInfo) UnmarshalJSON(bytes []byte) error {
+	fields := make(map[string]string, 0)
+	if err := json.Unmarshal(bytes, &fields); err != nil {
+		return errors.WithStack(err)
 	}
 
-	var buf strings.Builder
-	_, _ = bld.WriteTo(&buf)
-	return buf.String()
-}
-
-func (bld *BuildInfo) Format(s fmt.State, v rune) {
-	switch v {
-	case 'V':
-		if s.Flag('#') {
-			_, _ = bld.WriteTo(s)
-		} else {
-			_, _ = io.WriteString(s, bld.version())
+	for k, v := range fields {
+		switch k {
+		case keyGoversion:
+			continue
+		case keyVersion:
+			bld.Version = v
+		case keyRevision:
+			bld.Revision = v
+		case keyTime:
+			var err error
+			bld.Time, err = time.Parse(time.RFC3339, v)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		default:
+			bld.withExtra(k, v)
 		}
-
-	case 'R':
-		if bld.Revision != "" {
-			_, _ = io.WriteString(s, bld.Revision)
-		}
-
-	case 'D':
-		if !bld.Time.IsZero() {
-			_, _ = io.WriteString(s, bld.Time.Format(time.RFC3339))
-		}
-
-	case 'G':
-		_, _ = io.WriteString(s, bld.GoVersion())
 	}
-}
-
-// WriteTo writes a string representation of the build information, similar to
-// String, to w. The return value is the number of bytes written. Any error
-// encountered during writing is ignored.
-func (bld *BuildInfo) WriteTo(w io.Writer) (int64, error) {
-	cw := writing.ToCountingStringWriter(w)
-	_, _ = cw.WriteString(bld.version())
-
-	if bld.Revision != "" {
-		_, _ = cw.WriteString(" (")
-		_, _ = cw.WriteString(bld.Revision)
-		if !bld.Time.IsZero() {
-			_, _ = cw.WriteString(" @ ")
-			_, _ = cw.WriteString(bld.Time.Format(time.RFC3339))
-		}
-		_, _ = cw.WriteString(")")
-	} else if !bld.Time.IsZero() {
-		_, _ = cw.WriteString(" (")
-		_, _ = cw.WriteString(bld.Time.Format(time.RFC3339))
-		_, _ = cw.WriteString(")")
-	}
-
-	return int64(cw.Count()), errors.Join(cw.Errors()...)
+	return nil
 }
 
 // HttpHandler is the http.Handler that writes BuildInfo bld as a json response

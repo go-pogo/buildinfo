@@ -12,12 +12,9 @@ import (
 	"time"
 )
 
-func New(ver string) *BuildInfo {
+func (bld *BuildInfo) init() {
 	bi, _ := debug.ReadBuildInfo()
-	bld := BuildInfo{
-		goVersion: bi.GoVersion,
-		Version:   ver,
-	}
+	bld.goVersion = bi.GoVersion
 
 	for _, set := range bi.Settings {
 		switch set.Key {
@@ -27,5 +24,4 @@ func New(ver string) *BuildInfo {
 			bld.Time, _ = time.Parse(time.RFC3339, set.Value)
 		}
 	}
-	return &bld
 }
