@@ -1,6 +1,6 @@
 module github.com/go-pogo/buildinfo
 
-go 1.14
+go 1.16
 
 require (
 	github.com/go-pogo/errors v0.8.0
