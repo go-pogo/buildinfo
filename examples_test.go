@@ -6,12 +6,27 @@ package buildinfo
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 )
 
 func ExampleNew() {
 	fmt.Println(New("1.2.3").String())
 	// Output: 1.2.3
+}
+
+//go:embed example.json
+var someEmbeddedJsonData []byte
+
+func ExampleBuildInfo_UnmarshalJSON() {
+	data := someEmbeddedJsonData
+	var bld BuildInfo
+	if err := bld.UnmarshalJSON(data); err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("version=%s, something=%s\n", bld.Version, bld.Extra["something"])
+	// Output: version=1.2.3, something=else
 }
 
 func ExampleRead() {

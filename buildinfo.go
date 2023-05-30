@@ -223,17 +223,28 @@ func (bld *BuildInfo) writeJson(w io.StringWriter) {
 }
 
 func (bld *BuildInfo) UnmarshalJSON(bytes []byte) error {
+	bld.init()
+
 	fields := make(map[string]string, 0)
 	if err := json.Unmarshal(bytes, &fields); err != nil {
 		return errors.WithStack(err)
 	}
 
 	for k, v := range fields {
+		if v == "" {
+			continue
+		}
+		if v = strings.TrimSpace(v); v == "" {
+			continue
+		}
+
 		switch k {
 		case keyGoversion:
 			continue
 		case keyVersion:
-			bld.Version = v
+			if v != EmptyVersion {
+				bld.Version = v
+			}
 		case keyRevision:
 			bld.Revision = v
 		case keyTime:

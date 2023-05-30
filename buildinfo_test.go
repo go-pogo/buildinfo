@@ -161,6 +161,29 @@ func TestBuildInfo_MarshalJSON(t *testing.T) {
 	}
 }
 
+func TestBuildInfo_UnmarshalJSON(t *testing.T) {
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			var haveStruct BuildInfo
+			haveErr := haveStruct.UnmarshalJSON([]byte(tc.wantJson))
+
+			wantStruct := tc.input
+			wantStruct.goVersion = goVersion
+
+			assert.Exactly(t, wantStruct, haveStruct)
+			assert.Nil(t, haveErr)
+		})
+	}
+
+	t.Run("empty json values", func(t *testing.T) {
+		var have BuildInfo
+		haveErr := have.UnmarshalJSON([]byte(`{"version":"","foo":""}`))
+
+		assert.Exactly(t, BuildInfo{goVersion: goVersion}, have)
+		assert.Nil(t, haveErr)
+	})
+}
+
 func TestHttpHandler(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
