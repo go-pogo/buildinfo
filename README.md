@@ -23,8 +23,7 @@ buildinfo
 [doc-url]: https://pkg.go.dev/github.com/go-pogo/buildinfo
 
 Package `buildinfo` provides basic building blocks and instructions to easily add
-build and release information to your app. This is done by replacing variables
-in main during build with `ldflags`.
+build and release information to your app.
 
 ```sh
 go get github.com/go-pogo/buildinfo
@@ -34,7 +33,7 @@ go get github.com/go-pogo/buildinfo
 import "github.com/go-pogo/buildinfo"
 ```
 
-## Usage
+## Using ldflags
 
 Declare build info variables in your main package:
 
@@ -55,6 +54,24 @@ Build your Go project and include the following `ldflags`:
 go build -ldflags=" \
   -X main.version=`$(git describe --tags)` \
   main.go
+```
+
+## Using an embedded file
+
+```
+package main
+
+import _ "embed"
+
+//go:embed buildinfo.json
+var buildInfo []byte
+
+func main() {
+    var bld buildinfo.BuildInfo
+    if err := json.Unmarshal(buildInfo, &bld); err != nil {
+        panic(err)
+    }
+}
 ```
 
 ## Prometheus metric collector

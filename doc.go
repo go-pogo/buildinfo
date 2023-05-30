@@ -24,25 +24,21 @@ Build your Go project and include the following ldflags:
 	  -X main.version=`$(git describe --tags)` \
 	  main.go
 
-# Using gen
-Create a file that is called by go generate:
+# Using an embedded file
 
-	//go:build ignore
 	package main
 
-	import "github.com/go-pogo/buildinfo/gen"
+	import _ "embed"
+
+	//go:embed buildinfo.json
+	var buildInfo []byte
 
 	func main() {
-		gen.GenerateFile("buildinfo.go")
+		var bld buildinfo.BuildInfo
+		if err := json.Unmarshal(buildInfo, &bld); err != nil {
+			panic(err)
+		}
 	}
-
-Use it to generate a buildinfo.go file containing the latest tag of your
-project's repository. The file should be renewed any time a new tag is created.
-This is typically done during build.
-
-# CLI tool
-
-	go install github.com/go-pogo/buildinfo/cmd/buildinfo@latest
 
 # Prometheus metric collector
 When using a metrics scraper like Prometheus, it is often a good idea to make
