@@ -88,16 +88,16 @@ func TestBuildInfo_String(t *testing.T) {
 }
 
 var tests = map[string]struct {
-	input    BuildInfo
-	wantMap  map[string]string
-	wantJson string
+	wantStruct BuildInfo
+	wantMap    map[string]string
+	wantJson   string
 }{
 	"empty": {
 		wantMap:  map[string]string{"version": EmptyVersion, "goversion": goVersion},
 		wantJson: `{"version":"` + EmptyVersion + `","goversion":"` + goVersion + `"}`,
 	},
 	"partial": {
-		input: BuildInfo{
+		wantStruct: BuildInfo{
 			Version: "v0.66",
 			Time:    time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 		},
@@ -109,7 +109,7 @@ var tests = map[string]struct {
 		wantJson: `{"version":"v0.66","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
 	},
 	"full": {
-		input: BuildInfo{
+		wantStruct: BuildInfo{
 			Version:  "v0.66",
 			Revision: "abcdefghi",
 			Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
@@ -123,7 +123,7 @@ var tests = map[string]struct {
 		wantJson: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
 	},
 	"extras": {
-		input: BuildInfo{
+		wantStruct: BuildInfo{
 			Version:  "v0.66",
 			Revision: "abcdefghi",
 			Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
@@ -145,7 +145,7 @@ var tests = map[string]struct {
 func TestBuildInfo_Map(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			assert.Exactly(t, tc.wantMap, tc.input.Map())
+			assert.Exactly(t, tc.wantMap, tc.wantStruct.Map())
 		})
 	}
 }
@@ -153,7 +153,7 @@ func TestBuildInfo_Map(t *testing.T) {
 func TestBuildInfo_MarshalJSON(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			haveBytes, haveErr := tc.input.MarshalJSON()
+			haveBytes, haveErr := tc.wantStruct.MarshalJSON()
 
 			assert.Exactly(t, []byte(tc.wantJson), haveBytes)
 			assert.Nil(t, haveErr)
@@ -167,10 +167,17 @@ func TestBuildInfo_UnmarshalJSON(t *testing.T) {
 			var haveStruct BuildInfo
 			haveErr := haveStruct.UnmarshalJSON([]byte(tc.wantJson))
 
-			wantStruct := tc.input
+			assert.Exactly(t, tc.wantStruct, haveStruct)
+			assert.Nil(t, haveErr)
+		})
+		t.Run(name, func(t *testing.T) {
+			haveStruct := New("")
+			haveErr := haveStruct.UnmarshalJSON([]byte(tc.wantJson))
+
+			wantStruct := tc.wantStruct
 			wantStruct.goVersion = goVersion
 
-			assert.Exactly(t, wantStruct, haveStruct)
+			assert.Exactly(t, wantStruct, *haveStruct)
 			assert.Nil(t, haveErr)
 		})
 	}
@@ -179,7 +186,7 @@ func TestBuildInfo_UnmarshalJSON(t *testing.T) {
 		var have BuildInfo
 		haveErr := have.UnmarshalJSON([]byte(`{"version":"","foo":""}`))
 
-		assert.Exactly(t, BuildInfo{goVersion: goVersion}, have)
+		assert.Exactly(t, BuildInfo{}, have)
 		assert.Nil(t, haveErr)
 	})
 }
@@ -188,7 +195,7 @@ func TestHttpHandler(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			HttpHandler(&tc.input).ServeHTTP(rec, nil)
+			HttpHandler(&tc.wantStruct).ServeHTTP(rec, nil)
 			assert.Exactly(t, []byte(tc.wantJson), rec.Body.Bytes())
 		})
 	}

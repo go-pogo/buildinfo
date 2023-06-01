@@ -223,8 +223,6 @@ func (bld *BuildInfo) writeJson(w io.StringWriter) {
 }
 
 func (bld *BuildInfo) UnmarshalJSON(bytes []byte) error {
-	bld.init()
-
 	fields := make(map[string]string, 0)
 	if err := json.Unmarshal(bytes, &fields); err != nil {
 		return errors.WithStack(err)
