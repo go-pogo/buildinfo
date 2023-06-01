@@ -37,11 +37,11 @@ const (
 	keyVersion   = "version"
 	keyGoversion = "goversion"
 	keyRevision  = "revision"
-	keyTime      = "time"
+	keyCreated   = "created"
 )
 
 func isReservedKey(key string) bool {
-	return key == keyVersion || key == keyGoversion || key == keyRevision || key == keyTime
+	return key == keyVersion || key == keyGoversion || key == keyRevision || key == keyCreated
 }
 
 // EmptyVersion is the default version string when no version is set.
@@ -55,8 +55,8 @@ type BuildInfo struct {
 	Version string
 	// Revision is the (short) commit hash the release is build from.
 	Revision string
-	// Time of when the release was build.
-	Time time.Time
+	// Created is the time of when the release was build.
+	Created time.Time
 	// Extra additional information to show.
 	Extra map[string]string
 }
@@ -143,8 +143,8 @@ func (bld *BuildInfo) Map() map[string]string {
 	if bld.Revision != "" {
 		m[keyRevision] = bld.Revision
 	}
-	if !bld.Time.IsZero() {
-		m[keyTime] = bld.Time.Format(time.RFC3339)
+	if !bld.Created.IsZero() {
+		m[keyCreated] = bld.Created.Format(time.RFC3339)
 	}
 
 	for key, val := range bld.Extra {
@@ -163,7 +163,7 @@ func (bld *BuildInfo) Map() map[string]string {
 //   - version and date: `8.5.0 (2020-06-16 19:53)`
 //   - all: `8.5.0 (#fedcba @ 2020-06-16 19:53)`
 func (bld *BuildInfo) String() string {
-	if bld.Revision == "" && bld.Time.IsZero() {
+	if bld.Revision == "" && bld.Created.IsZero() {
 		return bld.version()
 	}
 
@@ -174,9 +174,9 @@ func (bld *BuildInfo) String() string {
 		_, _ = buf.WriteRune(' ')
 		_, _ = buf.WriteString(bld.Revision)
 	}
-	if !bld.Time.IsZero() {
+	if !bld.Created.IsZero() {
 		_, _ = buf.WriteString(" (")
-		_, _ = buf.WriteString(bld.Time.Format(time.RFC3339))
+		_, _ = buf.WriteString(bld.Created.Format(time.RFC3339))
 		_, _ = buf.WriteString(")")
 	}
 	return buf.String()
@@ -204,9 +204,9 @@ func (bld *BuildInfo) writeJson(w io.StringWriter) {
 		_, _ = w.WriteString(`","revision":"`)
 		_, _ = w.WriteString(bld.Revision)
 	}
-	if !bld.Time.IsZero() {
-		_, _ = w.WriteString(`","time":"`)
-		_, _ = w.WriteString(bld.Time.Format(time.RFC3339))
+	if !bld.Created.IsZero() {
+		_, _ = w.WriteString(`","created":"`)
+		_, _ = w.WriteString(bld.Created.Format(time.RFC3339))
 	}
 
 	_, _ = w.WriteString(`","goversion":"`)
@@ -239,18 +239,22 @@ func (bld *BuildInfo) UnmarshalJSON(bytes []byte) error {
 		switch k {
 		case keyGoversion:
 			continue
+
 		case keyVersion:
 			if v != EmptyVersion {
 				bld.Version = v
 			}
+
 		case keyRevision:
 			bld.Revision = v
-		case keyTime:
+
+		case keyCreated:
 			var err error
-			bld.Time, err = time.Parse(time.RFC3339, v)
+			bld.Created, err = time.Parse(time.RFC3339, v)
 			if err != nil {
 				return errors.WithStack(err)
 			}
+
 		default:
 			bld.withExtra(k, v)
 		}

@@ -21,7 +21,7 @@ func (bld *BuildInfo) init() {
 		case "vcs.revision":
 			bld.Revision = set.Value
 		case "vcs.time":
-			bld.Time, _ = time.Parse(time.RFC3339, set.Value)
+			bld.Created, _ = time.Parse(time.RFC3339, set.Value)
 		}
 	}
 }
