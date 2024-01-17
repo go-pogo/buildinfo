@@ -32,7 +32,7 @@ func TestBuildInfo_WithExtra(t *testing.T) {
 		keyVersion,
 		keyGoversion,
 		keyRevision,
-		keyCreated,
+		keyTime,
 	}
 	for _, key := range reserved {
 		t.Run("panic on reserved key "+key, func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestBuildInfo_String(t *testing.T) {
 		"version and time": {
 			input: BuildInfo{
 				Version: "0.0.2-rc1",
-				Created: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+				Time:    time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 			},
 			want: "0.0.2-rc1 (2020-06-16T19:53:00Z)",
 		},
@@ -75,7 +75,7 @@ func TestBuildInfo_String(t *testing.T) {
 			input: BuildInfo{
 				Version:  "v1.0.66",
 				Revision: "fedcba",
-				Created:  time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+				Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 			},
 			want: "v1.0.66 fedcba (2020-06-16T19:53:00Z)",
 		},
@@ -99,12 +99,12 @@ var tests = map[string]struct {
 	"partial": {
 		wantStruct: BuildInfo{
 			Version: "v0.66",
-			Created: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+			Time:    time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 		},
 		wantMap: map[string]string{
 			keyVersion:   "v0.66",
 			keyGoversion: goVersion,
-			keyCreated:   "2020-06-16T19:53:00Z",
+			keyTime:      "2020-06-16T19:53:00Z",
 		},
 		wantJson: `{"version":"v0.66","created":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
 	},
@@ -112,13 +112,13 @@ var tests = map[string]struct {
 		wantStruct: BuildInfo{
 			Version:  "v0.66",
 			Revision: "abcdefghi",
-			Created:  time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+			Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 		},
 		wantMap: map[string]string{
 			keyVersion:   "v0.66",
 			keyGoversion: goVersion,
 			keyRevision:  "abcdefghi",
-			keyCreated:   "2020-06-16T19:53:00Z",
+			keyTime:      "2020-06-16T19:53:00Z",
 		},
 		wantJson: `{"version":"v0.66","revision":"abcdefghi","created":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
 	},
@@ -126,7 +126,7 @@ var tests = map[string]struct {
 		wantStruct: BuildInfo{
 			Version:  "v0.66",
 			Revision: "abcdefghi",
-			Created:  time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+			Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
 			Extra: map[string]string{
 				"foo": "bar",
 			},
@@ -135,7 +135,7 @@ var tests = map[string]struct {
 			keyVersion:   "v0.66",
 			keyGoversion: goVersion,
 			keyRevision:  "abcdefghi",
-			keyCreated:   "2020-06-16T19:53:00Z",
+			keyTime:      "2020-06-16T19:53:00Z",
 			"foo":        "bar",
 		},
 		wantJson: `{"version":"v0.66","revision":"abcdefghi","created":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `","foo":"bar"}`,
