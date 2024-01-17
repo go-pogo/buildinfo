@@ -6,6 +6,8 @@ package buildinfo
 
 import (
 	"encoding/json"
+	"github.com/go-pogo/errors"
+	"github.com/go-pogo/writing"
 	"io"
 	"io/fs"
 	"net/http"
@@ -13,9 +15,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"github.com/go-pogo/errors"
-	"github.com/go-pogo/writing"
 )
 
 //goland:noinspection GoUnusedConst
@@ -86,16 +85,18 @@ func Open(file string) (*BuildInfo, error) {
 	return OpenFS(os.DirFS(""), file)
 }
 
-// OpenFS opens file from fsys. It then reads and decodes its contents using
-// Read.
-func OpenFS(fsys fs.FS, file string) (*BuildInfo, error) {
+// OpenFS opens file from fsys. It then reads and decodes the file's contents
+// using Read.
+func OpenFS(fsys fs.FS, file string) (bld *BuildInfo, err error) {
 	f, err := fsys.Open(file)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		err = errors.WithStack(err)
+		return nil, err
 	}
 
-	defer f.Close()
-	return Read(f)
+	defer errors.AppendFunc(&err, f.Close)
+	bld, err = Read(f)
+	return
 }
 
 const panicReservedKey = "buildinfo: cannot add reserved key "
