@@ -105,7 +105,7 @@ var tests = map[string]struct {
 			keyGoversion: goVersion,
 			keyTime:      "2020-06-16T19:53:00Z",
 		},
-		wantJson: `{"version":"v0.66","created":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
+		wantJson: `{"version":"v0.66","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
 	},
 	"full": {
 		wantStruct: BuildInfo{
@@ -119,7 +119,7 @@ var tests = map[string]struct {
 			keyRevision:  "abcdefghi",
 			keyTime:      "2020-06-16T19:53:00Z",
 		},
-		wantJson: `{"version":"v0.66","revision":"abcdefghi","created":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
+		wantJson: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
 	},
 	"extras": {
 		wantStruct: BuildInfo{
@@ -137,7 +137,7 @@ var tests = map[string]struct {
 			keyTime:      "2020-06-16T19:53:00Z",
 			"foo":        "bar",
 		},
-		wantJson: `{"version":"v0.66","revision":"abcdefghi","created":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `","foo":"bar"}`,
+		wantJson: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `","foo":"bar"}`,
 	},
 }
 
