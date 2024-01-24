@@ -267,6 +267,7 @@ func (bld *BuildInfo) UnmarshalJSON(bytes []byte) error {
 // to the received request.
 func HttpHandler(bld *BuildInfo) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		bld.writeJson(writing.ToStringWriter(w))
 	})
 }
