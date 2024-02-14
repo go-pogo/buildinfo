@@ -165,8 +165,8 @@ func (bld *BuildInfo) String() string {
 }
 
 var (
-	_ json.Marshaler   = new(BuildInfo)
-	_ json.Unmarshaler = new(BuildInfo)
+	_ json.Marshaler   = (*BuildInfo)(nil)
+	_ json.Unmarshaler = (*BuildInfo)(nil)
 )
 
 // MarshalJSON returns valid JSON output.
@@ -248,7 +248,9 @@ func (bld *BuildInfo) UnmarshalJSON(bytes []byte) error {
 // to the received request.
 func HttpHandler(bld *BuildInfo) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		h := w.Header()
+		h.Set("Content-Type", "application/json")
+		h.Set("Last-Modified", bld.Time.Format(http.TimeFormat))
 		bld.writeJson(writing.ToStringWriter(w))
 	})
 }
