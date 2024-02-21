@@ -12,7 +12,7 @@ import (
 	"os"
 )
 
-// Read reads from io.Reader r and json unmarshalls it's content into a new
+// Read reads from io.Reader r and json unmarshals it's content into a new
 // BuildInfo.
 func Read(r io.Reader) (*BuildInfo, error) {
 	var bld BuildInfo
@@ -27,7 +27,7 @@ func Read(r io.Reader) (*BuildInfo, error) {
 
 // Open the file, then read and decode its contents using Read.
 func Open(file string) (*BuildInfo, error) {
-	return OpenFS(os.DirFS(""), file)
+	return OpenFS(osFS{}, file)
 }
 
 // OpenFS opens file from fsys. It then reads and decodes the file's contents
@@ -43,3 +43,9 @@ func OpenFS(fsys fs.FS, file string) (bld *BuildInfo, err error) {
 	bld, err = Read(f)
 	return
 }
+
+var _ fs.FS = (*osFS)(nil)
+
+type osFS struct{}
+
+func (o osFS) Open(name string) (fs.File, error) { return os.Open(name) }
