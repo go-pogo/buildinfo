@@ -18,14 +18,14 @@ import (
 
 //goland:noinspection GoUnusedConst
 const (
-	// ShortFlag is the default flag to print the current build information of the app.
+	// ShortFlag is the default flag to print the current build information.
 	ShortFlag = "v"
 	// LongFlag is an alternative long version that may be used together with ShortFlag.
 	LongFlag = "version"
 
 	// MetricName is the default name for the metric (without namespace).
 	MetricName = "buildinfo"
-	// MetricHelp is the default help text that describes the metric.
+	// MetricHelp is the default help text to describe the metric.
 	MetricHelp = "Metric with build information labels and a constant value of '1'."
 
 	// Route is the default path for a http handler.

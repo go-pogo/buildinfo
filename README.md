@@ -29,7 +29,7 @@ build and release information to your app.
 go get github.com/go-pogo/buildinfo
 ```
 
-```go
+```
 import "github.com/go-pogo/buildinfo"
 ```
 
@@ -50,7 +50,7 @@ func main() {
 
 Build your Go project and include the following `ldflags`:
 
-```
+```sh
 go build -ldflags=" \
   -X main.version=`$(git describe --tags)` \
   main.go
@@ -58,10 +58,14 @@ go build -ldflags=" \
 
 ## Using an embedded file
 
-```
+```go
 package main
 
-import _ "embed"
+import (
+	_ "embed"
+    "encoding/json"
+    "github.com/go-pogo/buildinfo"
+)
 
 //go:embed buildinfo.json
 var buildInfo []byte
@@ -74,13 +78,14 @@ func main() {
 }
 ```
 
-## Prometheus metric collector
+## Observability usage
 
-When using a metrics scraper like Prometheus, it is often a good idea to make
-the build information of your app available. Below example shows just how easy
-it is to create and register a collector with the build information as
-constant labels.
+When using a metrics scraper like Prometheus or OpenTelemetry, it is often a 
+good idea to make the build information of your app available. Below example 
+shows just how easy it is to create and register a collector with the build 
+information as constant labels.
 
+### Prometheus metric collector
 ```
 prometheus.MustRegister(prometheus.NewGaugeFunc(
     prometheus.GaugeOpts{
@@ -91,6 +96,19 @@ prometheus.MustRegister(prometheus.NewGaugeFunc(
     },
     func() float64 { return 1 },
 ))
+```
+
+### OTEL resource
+```
+resource.Merge(
+    resource.Default(),
+    resource.NewSchemaless(
+        semconv.ServiceName("myapp"),
+        semconv.ServiceVersion(bld.Version),
+        attribute.String("vcs.revision", bld.Revision),
+        attribute.String("vcs.time", bld.Time.Format(time.RFC3339)),
+    ),
+)
 ```
 
 ## Documentation
