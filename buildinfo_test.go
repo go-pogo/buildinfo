@@ -6,7 +6,6 @@ package buildinfo
 
 import (
 	"github.com/stretchr/testify/assert"
-	"net/http/httptest"
 	"runtime"
 	"testing"
 	"time"
@@ -188,14 +187,4 @@ func TestBuildInfo_UnmarshalJSON(t *testing.T) {
 		assert.Exactly(t, BuildInfo{}, have)
 		assert.Nil(t, haveErr)
 	})
-}
-
-func TestHttpHandler(t *testing.T) {
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			rec := httptest.NewRecorder()
-			HttpHandler(&tc.wantStruct).ServeHTTP(rec, nil)
-			assert.Exactly(t, []byte(tc.wantJson), rec.Body.Bytes())
-		})
-	}
 }

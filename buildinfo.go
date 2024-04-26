@@ -7,9 +7,7 @@ package buildinfo
 import (
 	"encoding/json"
 	"github.com/go-pogo/errors"
-	"github.com/go-pogo/writing"
 	"io"
-	"net/http"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -242,15 +240,4 @@ func (bld *BuildInfo) UnmarshalJSON(bytes []byte) error {
 		}
 	}
 	return nil
-}
-
-// HttpHandler is the http.Handler that writes BuildInfo bld as a json response
-// to the received request.
-func HttpHandler(bld *BuildInfo) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		h := w.Header()
-		h.Set("Content-Type", "application/json")
-		h.Set("Last-Modified", bld.Time.Format(http.TimeFormat))
-		bld.writeJson(writing.ToStringWriter(w))
-	})
 }
