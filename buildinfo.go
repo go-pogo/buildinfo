@@ -28,8 +28,8 @@ const (
 	// MetricHelp is the default help text to describe the metric.
 	MetricHelp = "Metric with build information labels and a constant value of '1'."
 
-	// Route is the default path for a http handler.
-	Route = "/version"
+	// PathPattern is the default path for a http handler.
+	PathPattern = "/version"
 
 	// reserved keys
 	keyVersion   = "version"
