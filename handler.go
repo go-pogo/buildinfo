@@ -15,7 +15,9 @@ func HTTPHandler(bld *BuildInfo) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		h := w.Header()
 		h.Set("Content-Type", "application/json")
-		h.Set("Last-Modified", bld.Time.Format(http.TimeFormat))
+		if t := bld.Time(); !t.IsZero() {
+			h.Set("Last-Modified", t.Format(http.TimeFormat))
+		}
 		bld.writeJson(writing.ToStringWriter(w))
 	})
 }

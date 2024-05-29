@@ -44,7 +44,7 @@ package main
 var version
 
 func main() {
-    bld := buildinfo.New(version)
+    bld, err := buildinfo.New(version)
 }
 ```
 
@@ -56,36 +56,15 @@ go build -ldflags=" \
   main.go
 ```
 
-## Using an embedded file
-
-```go
-package main
-
-import (
-	_ "embed"
-    "encoding/json"
-    "github.com/go-pogo/buildinfo"
-)
-
-//go:embed buildinfo.json
-var buildInfo []byte
-
-func main() {
-    var bld buildinfo.BuildInfo
-    if err := json.Unmarshal(buildInfo, &bld); err != nil {
-        panic(err)
-    }
-}
-```
-
 ## Observability usage
 
-When using a metrics scraper like Prometheus or OpenTelemetry, it is often a 
-good idea to make the build information of your app available. Below example 
-shows just how easy it is to create and register a collector with the build 
+When using a metrics scraper like Prometheus or OpenTelemetry, it is often a
+good idea to make the build information of your app available. Below example
+shows just how easy it is to create and register a collector with the build
 information as constant labels.
 
 ### Prometheus metric collector
+
 ```
 prometheus.MustRegister(prometheus.NewGaugeFunc(
     prometheus.GaugeOpts{
@@ -99,6 +78,7 @@ prometheus.MustRegister(prometheus.NewGaugeFunc(
 ```
 
 ### OTEL resource
+
 ```
 resource.Merge(
     resource.Default(),

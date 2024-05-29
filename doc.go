@@ -15,7 +15,7 @@ Declare build info variables in your main package:
 	var version
 
 	func main() {
-		bld := buildinfo.New(version)
+		bld, err := buildinfo.New(version)
 	}
 
 Build your Go project and include the following ldflags:
@@ -23,22 +23,6 @@ Build your Go project and include the following ldflags:
 	go build -ldflags=" \
 	  -X main.version=`$(git describe --tags)` \
 	  main.go
-
-# Using an embedded file
-
-	package main
-
-	import _ "embed"
-
-	//go:embed buildinfo.json
-	var buildInfo []byte
-
-	func main() {
-		var bld buildinfo.BuildInfo
-		if err := json.Unmarshal(buildInfo, &bld); err != nil {
-			panic(err)
-		}
-	}
 
 # Prometheus metric collector
 When using a metrics scraper like Prometheus, it is often a good idea to make

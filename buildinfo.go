@@ -46,36 +46,93 @@ var EmptyVersion = "0.0.0"
 // BuildInfo contains the relevant information of the current release's build
 // version, revision and time.
 type BuildInfo struct {
-	goVersion string
-	// Version of the release.
-	Version string
-	// Revision is the (short) commit hash the release is build from.
-	Revision string
-	// Time of the commit the release was build.
-	Time time.Time
+	info *debug.BuildInfo
+
+	// AltName is an alternative name for the release.
+	AltName string
+	// AltVersion is an alternative version of the release.
+	AltVersion string
 	// Extra additional information to show.
 	Extra map[string]string
 }
 
-// New creates a new BuildInfo with the given version string.
-func New(ver string) *BuildInfo {
-	bld := &BuildInfo{Version: ver}
-	bld.init()
-	return bld
+const ErrNoBuildInfo = "no build information available"
+
+// New creates a new BuildInfo with the given altVersion string.
+func New(altVersion string) (*BuildInfo, error) {
+	bld := BuildInfo{AltVersion: altVersion}
+	if !bld.init() {
+		return nil, errors.New(ErrNoBuildInfo)
+	}
+	return &bld, nil
 }
 
-func (bld *BuildInfo) init() {
-	bi, _ := debug.ReadBuildInfo()
-	bld.goVersion = bi.GoVersion
+func (bld *BuildInfo) init() bool {
+	if bld.info != nil {
+		return true
+	}
 
-	for _, set := range bi.Settings {
-		switch set.Key {
-		case "vcs.revision":
-			bld.Revision = set.Value
-		case "vcs.time":
-			bld.Time, _ = time.Parse(time.RFC3339, set.Value)
+	if info, ok := debug.ReadBuildInfo(); ok {
+		bld.info = info
+		return true
+	}
+	return false
+}
+
+func (bld *BuildInfo) Internal() *debug.BuildInfo { return bld.info }
+
+func (bld *BuildInfo) Setting(key string) string {
+	if !bld.init() {
+		return ""
+	}
+	for _, set := range bld.info.Settings {
+		if set.Key == key {
+			return set.Value
 		}
 	}
+	return ""
+}
+
+// GoVersion returns the Go runtime version used to make the current build.
+func (bld *BuildInfo) GoVersion() string {
+	if !bld.init() || bld.info.GoVersion == "" {
+		return runtime.Version()
+	}
+	return bld.info.GoVersion
+}
+
+func (bld *BuildInfo) Name() string {
+	if bld.AltName != "" {
+		return bld.AltName
+	}
+	if !bld.init() {
+		return ""
+	}
+	return bld.info.Path[:strings.LastIndex(bld.info.Path, "/")+1]
+}
+
+func (bld *BuildInfo) Version() string {
+	if bld.AltVersion != "" {
+		return bld.AltVersion
+	}
+	if !bld.init() || bld.info.Main.Version == "" || bld.info.Main.Version == "(devel)" {
+		return EmptyVersion
+	}
+	return bld.info.Main.Version
+}
+
+const (
+	settingRevision = "vcs.revision"
+	settingTime     = "vcs.time"
+)
+
+// Revision is the (short) commit hash the release is build from.
+func (bld *BuildInfo) Revision() string { return bld.Setting(settingRevision) }
+
+// Time of the commit the release was build.
+func (bld *BuildInfo) Time() time.Time {
+	t, _ := time.Parse(time.RFC3339, bld.Setting(settingTime))
+	return t
 }
 
 const panicReservedKey = "buildinfo: cannot add reserved key "
@@ -98,33 +155,18 @@ func (bld *BuildInfo) withExtra(key, value string) {
 	bld.Extra[key] = value
 }
 
-func (bld *BuildInfo) version() string {
-	if bld.Version == "" {
-		return EmptyVersion
-	}
-	return bld.Version
-}
-
-// GoVersion returns the Go runtime version used to make the current build.
-func (bld *BuildInfo) GoVersion() string {
-	if bld.goVersion == "" {
-		bld.goVersion = runtime.Version()
-	}
-	return bld.goVersion
-}
-
 // Map returns the build information as a map. Field names are lowercase.
-// Empty fields within BuildInfo are omitted.
+// Empty fields are omitted.
 func (bld *BuildInfo) Map() map[string]string {
 	m := make(map[string]string, 5+len(bld.Extra))
-	m[keyVersion] = bld.version()
+	m[keyVersion] = bld.Version()
 	m[keyGoversion] = bld.GoVersion()
 
-	if bld.Revision != "" {
-		m[keyRevision] = bld.Revision
+	if rev := bld.Revision(); rev != "" {
+		m[keyRevision] = rev
 	}
-	if !bld.Time.IsZero() {
-		m[keyTime] = bld.Time.Format(time.RFC3339)
+	if tim := bld.Time(); !tim.IsZero() {
+		m[keyTime] = tim.Format(time.RFC3339)
 	}
 
 	for key, val := range bld.Extra {
@@ -143,32 +185,31 @@ func (bld *BuildInfo) Map() map[string]string {
 //   - version and date: `8.5.0 (2020-06-16 19:53)`
 //   - all: `8.5.0 (#fedcba @ 2020-06-16 19:53)`
 func (bld *BuildInfo) String() string {
-	if bld.Revision == "" && bld.Time.IsZero() {
-		return bld.version()
+	rev := bld.Revision()
+	tim := bld.Time()
+	if rev == "" && tim.IsZero() {
+		return bld.Version()
 	}
 
 	var buf strings.Builder
-	_, _ = buf.WriteString(bld.version())
+	_, _ = buf.WriteString(bld.Version())
 
-	if bld.Revision != "" {
+	if rev != "" {
 		_, _ = buf.WriteRune(' ')
-		_, _ = buf.WriteString(bld.Revision)
+		_, _ = buf.WriteString(rev)
 	}
-	if !bld.Time.IsZero() {
+	if !tim.IsZero() {
 		_, _ = buf.WriteString(" (")
-		_, _ = buf.WriteString(bld.Time.Format(time.RFC3339))
+		_, _ = buf.WriteString(tim.Format(time.RFC3339))
 		_, _ = buf.WriteString(")")
 	}
 	return buf.String()
 }
 
-var (
-	_ json.Marshaler   = (*BuildInfo)(nil)
-	_ json.Unmarshaler = (*BuildInfo)(nil)
-)
+var _ json.Marshaler = (*BuildInfo)(nil)
 
 // MarshalJSON returns valid JSON output.
-// Empty fields within BuildInfo are omitted.
+// Empty fields within buildInfo are omitted.
 func (bld *BuildInfo) MarshalJSON() ([]byte, error) {
 	// WriteString on strings.Builder never returns an error
 	var buf strings.Builder
@@ -178,15 +219,15 @@ func (bld *BuildInfo) MarshalJSON() ([]byte, error) {
 
 func (bld *BuildInfo) writeJson(w io.StringWriter) {
 	_, _ = w.WriteString(`{"version":"`)
-	_, _ = w.WriteString(bld.version())
+	_, _ = w.WriteString(bld.Version())
 
-	if bld.Revision != "" {
+	if rev := bld.Revision(); rev != "" {
 		_, _ = w.WriteString(`","revision":"`)
-		_, _ = w.WriteString(bld.Revision)
+		_, _ = w.WriteString(rev)
 	}
-	if !bld.Time.IsZero() {
+	if tim := bld.Time(); !tim.IsZero() {
 		_, _ = w.WriteString(`","time":"`)
-		_, _ = w.WriteString(bld.Time.Format(time.RFC3339))
+		_, _ = w.WriteString(tim.Format(time.RFC3339))
 	}
 
 	_, _ = w.WriteString(`","goversion":"`)
@@ -200,44 +241,4 @@ func (bld *BuildInfo) writeJson(w io.StringWriter) {
 	}
 
 	_, _ = w.WriteString(`"}`)
-}
-
-func (bld *BuildInfo) UnmarshalJSON(bytes []byte) error {
-	fields := make(map[string]string, 0)
-	if err := json.Unmarshal(bytes, &fields); err != nil {
-		return errors.WithStack(err)
-	}
-
-	for k, v := range fields {
-		if v == "" {
-			continue
-		}
-		if v = strings.TrimSpace(v); v == "" {
-			continue
-		}
-
-		switch k {
-		case keyGoversion:
-			continue
-
-		case keyVersion:
-			if v != EmptyVersion {
-				bld.Version = v
-			}
-
-		case keyRevision:
-			bld.Revision = v
-
-		case keyTime:
-			var err error
-			bld.Time, err = time.Parse(time.RFC3339, v)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-		default:
-			bld.withExtra(k, v)
-		}
-	}
-	return nil
 }

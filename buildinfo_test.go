@@ -7,6 +7,7 @@ package buildinfo
 import (
 	"github.com/stretchr/testify/assert"
 	"runtime"
+	"runtime/debug"
 	"testing"
 	"time"
 )
@@ -14,9 +15,9 @@ import (
 var goVersion = runtime.Version()
 
 func TestNew(t *testing.T) {
-	have := New("v1.2.3")
-	want := &BuildInfo{Version: "v1.2.3", goVersion: goVersion}
-	assert.Exactly(t, want, have)
+	have, err := New("v1.2.3")
+	assert.Nil(t, err)
+	assert.Exactly(t, "v1.2.3", have.AltVersion)
 }
 
 func TestBuildInfo_WithExtra(t *testing.T) {
@@ -52,28 +53,40 @@ func TestBuildInfo_String(t *testing.T) {
 		want  string
 	}{
 		"version only": {
-			input: BuildInfo{Version: "v0.12.1"},
+			input: BuildInfo{AltVersion: "v0.12.1"},
 			want:  "v0.12.1",
 		},
 		"version and revision": {
 			input: BuildInfo{
-				Version:  "v1.0.66",
-				Revision: "fedcba",
+				info: &debug.BuildInfo{
+					Settings: []debug.BuildSetting{
+						{Key: settingRevision, Value: "fedcba"},
+					},
+				},
+				AltVersion: "v1.0.66",
 			},
 			want: "v1.0.66 fedcba",
 		},
 		"version and time": {
 			input: BuildInfo{
-				Version: "0.0.2-rc1",
-				Time:    time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+				info: &debug.BuildInfo{
+					Settings: []debug.BuildSetting{
+						{Key: settingTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
+					},
+				},
+				AltVersion: "0.0.2-rc1",
 			},
 			want: "0.0.2-rc1 (2020-06-16T19:53:00Z)",
 		},
 		"all": {
 			input: BuildInfo{
-				Version:  "v1.0.66",
-				Revision: "fedcba",
-				Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+				info: &debug.BuildInfo{
+					Settings: []debug.BuildSetting{
+						{Key: settingRevision, Value: "fedcba"},
+						{Key: settingTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
+					},
+				},
+				AltVersion: "v1.0.66",
 			},
 			want: "v1.0.66 fedcba (2020-06-16T19:53:00Z)",
 		},
@@ -96,8 +109,12 @@ var tests = map[string]struct {
 	},
 	"partial": {
 		wantStruct: BuildInfo{
-			Version: "v0.66",
-			Time:    time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+			info: &debug.BuildInfo{
+				Settings: []debug.BuildSetting{
+					{Key: settingTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
+				},
+			},
+			AltVersion: "v0.66",
 		},
 		wantMap: map[string]string{
 			keyVersion:   "v0.66",
@@ -108,9 +125,13 @@ var tests = map[string]struct {
 	},
 	"full": {
 		wantStruct: BuildInfo{
-			Version:  "v0.66",
-			Revision: "abcdefghi",
-			Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+			info: &debug.BuildInfo{
+				Settings: []debug.BuildSetting{
+					{Key: settingRevision, Value: "abcdefghi"},
+					{Key: settingTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
+				},
+			},
+			AltVersion: "v0.66",
 		},
 		wantMap: map[string]string{
 			keyVersion:   "v0.66",
@@ -122,9 +143,13 @@ var tests = map[string]struct {
 	},
 	"extras": {
 		wantStruct: BuildInfo{
-			Version:  "v0.66",
-			Revision: "abcdefghi",
-			Time:     time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC),
+			info: &debug.BuildInfo{
+				Settings: []debug.BuildSetting{
+					{Key: settingRevision, Value: "abcdefghi"},
+					{Key: settingTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
+				},
+			},
+			AltVersion: "v0.66",
 			Extra: map[string]string{
 				"foo": "bar",
 			},
@@ -153,38 +178,8 @@ func TestBuildInfo_MarshalJSON(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			haveBytes, haveErr := tc.wantStruct.MarshalJSON()
 
-			assert.Exactly(t, []byte(tc.wantJson), haveBytes)
+			assert.Exactly(t, tc.wantJson, string(haveBytes))
 			assert.Nil(t, haveErr)
 		})
 	}
-}
-
-func TestBuildInfo_UnmarshalJSON(t *testing.T) {
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			var haveStruct BuildInfo
-			haveErr := haveStruct.UnmarshalJSON([]byte(tc.wantJson))
-
-			assert.Exactly(t, tc.wantStruct, haveStruct)
-			assert.Nil(t, haveErr)
-		})
-		t.Run(name, func(t *testing.T) {
-			haveStruct := New("")
-			haveErr := haveStruct.UnmarshalJSON([]byte(tc.wantJson))
-
-			wantStruct := tc.wantStruct
-			wantStruct.goVersion = goVersion
-
-			assert.Exactly(t, wantStruct, *haveStruct)
-			assert.Nil(t, haveErr)
-		})
-	}
-
-	t.Run("empty json values", func(t *testing.T) {
-		var have BuildInfo
-		haveErr := have.UnmarshalJSON([]byte(`{"version":"","foo":""}`))
-
-		assert.Exactly(t, BuildInfo{}, have)
-		assert.Nil(t, haveErr)
-	})
 }
