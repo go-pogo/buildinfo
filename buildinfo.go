@@ -32,13 +32,9 @@ const (
 	// reserved keys
 	keyVersion   = "version"
 	keyGoversion = "goversion"
-	keyRevision  = "revision"
-	keyTime      = "time"
+	keyRevision  = "vcs.revision"
+	keyTime      = "vcs.time"
 )
-
-func isReservedKey(key string) bool {
-	return key == keyVersion || key == keyGoversion || key == keyRevision || key == keyTime
-}
 
 // EmptyVersion is the default version string when no version is set.
 var EmptyVersion = "0.0.0"
@@ -53,7 +49,7 @@ type BuildInfo struct {
 	// AltVersion is an alternative version of the release.
 	AltVersion string
 	// Extra additional information to show.
-	Extra map[string]string
+	//Extra map[string]string
 }
 
 const ErrNoBuildInfo = "no build information available"
@@ -80,6 +76,22 @@ func (bld *BuildInfo) init() bool {
 }
 
 func (bld *BuildInfo) Internal() *debug.BuildInfo { return bld.info }
+
+func (bld *BuildInfo) Module(name string) debug.Module {
+	if !bld.init() {
+		return debug.Module{}
+	}
+	if name == "main" {
+		return bld.info.Main
+	}
+
+	for _, mod := range bld.info.Deps {
+		if mod.Path == name {
+			return *mod
+		}
+	}
+	return debug.Module{}
+}
 
 func (bld *BuildInfo) Setting(key string) string {
 	if !bld.init() {
@@ -121,44 +133,19 @@ func (bld *BuildInfo) Version() string {
 	return bld.info.Main.Version
 }
 
-const (
-	settingRevision = "vcs.revision"
-	settingTime     = "vcs.time"
-)
-
 // Revision is the (short) commit hash the release is build from.
-func (bld *BuildInfo) Revision() string { return bld.Setting(settingRevision) }
+func (bld *BuildInfo) Revision() string { return bld.Setting(keyRevision) }
 
 // Time of the commit the release was build.
 func (bld *BuildInfo) Time() time.Time {
-	t, _ := time.Parse(time.RFC3339, bld.Setting(settingTime))
+	t, _ := time.Parse(time.RFC3339, bld.Setting(keyTime))
 	return t
-}
-
-const panicReservedKey = "buildinfo: cannot add reserved key "
-
-// WithExtra adds an extra key value pair.
-func (bld *BuildInfo) WithExtra(key, value string) *BuildInfo {
-	if isReservedKey(key) {
-		panic(panicReservedKey + key)
-	}
-
-	bld.withExtra(key, value)
-	return bld
-}
-
-func (bld *BuildInfo) withExtra(key, value string) {
-	if bld.Extra == nil {
-		bld.Extra = make(map[string]string, 2)
-	}
-
-	bld.Extra[key] = value
 }
 
 // Map returns the build information as a map. Field names are lowercase.
 // Empty fields are omitted.
 func (bld *BuildInfo) Map() map[string]string {
-	m := make(map[string]string, 5+len(bld.Extra))
+	m := make(map[string]string, 5)
 	m[keyVersion] = bld.Version()
 	m[keyGoversion] = bld.GoVersion()
 
@@ -167,12 +154,6 @@ func (bld *BuildInfo) Map() map[string]string {
 	}
 	if tim := bld.Time(); !tim.IsZero() {
 		m[keyTime] = tim.Format(time.RFC3339)
-	}
-
-	for key, val := range bld.Extra {
-		if !isReservedKey(key) {
-			m[key] = val
-		}
 	}
 	return m
 }
@@ -232,13 +213,6 @@ func (bld *BuildInfo) writeJson(w io.StringWriter) {
 
 	_, _ = w.WriteString(`","goversion":"`)
 	_, _ = w.WriteString(bld.GoVersion())
-
-	for key, val := range bld.Extra {
-		_, _ = w.WriteString(`","`)
-		_, _ = w.WriteString(key)
-		_, _ = w.WriteString(`":"`)
-		_, _ = w.WriteString(val)
-	}
 
 	_, _ = w.WriteString(`"}`)
 }

@@ -20,29 +20,6 @@ func TestNew(t *testing.T) {
 	assert.Exactly(t, "v1.2.3", have.AltVersion)
 }
 
-func TestBuildInfo_WithExtra(t *testing.T) {
-	t.Run("add value", func(t *testing.T) {
-		var bi BuildInfo
-		bi.WithExtra("foo", "bar")
-		assert.Exactly(t, map[string]string{"foo": "bar"}, bi.Extra)
-	})
-
-	reserved := []string{
-		keyVersion,
-		keyGoversion,
-		keyRevision,
-		keyTime,
-	}
-	for _, key := range reserved {
-		t.Run("panic on reserved key "+key, func(t *testing.T) {
-			assert.Panics(t, func() {
-				var bi BuildInfo
-				bi.WithExtra(key, "some value")
-			})
-		})
-	}
-}
-
 func TestBuildInfo_GoVersion(t *testing.T) {
 	assert.Exactly(t, goVersion, new(BuildInfo).GoVersion())
 }
@@ -60,7 +37,7 @@ func TestBuildInfo_String(t *testing.T) {
 			input: BuildInfo{
 				info: &debug.BuildInfo{
 					Settings: []debug.BuildSetting{
-						{Key: settingRevision, Value: "fedcba"},
+						{Key: keyRevision, Value: "fedcba"},
 					},
 				},
 				AltVersion: "v1.0.66",
@@ -71,7 +48,7 @@ func TestBuildInfo_String(t *testing.T) {
 			input: BuildInfo{
 				info: &debug.BuildInfo{
 					Settings: []debug.BuildSetting{
-						{Key: settingTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
+						{Key: keyTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
 					},
 				},
 				AltVersion: "0.0.2-rc1",
@@ -82,8 +59,8 @@ func TestBuildInfo_String(t *testing.T) {
 			input: BuildInfo{
 				info: &debug.BuildInfo{
 					Settings: []debug.BuildSetting{
-						{Key: settingRevision, Value: "fedcba"},
-						{Key: settingTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
+						{Key: keyRevision, Value: "fedcba"},
+						{Key: keyTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
 					},
 				},
 				AltVersion: "v1.0.66",
@@ -111,7 +88,7 @@ var tests = map[string]struct {
 		wantStruct: BuildInfo{
 			info: &debug.BuildInfo{
 				Settings: []debug.BuildSetting{
-					{Key: settingTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
+					{Key: keyTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
 				},
 			},
 			AltVersion: "v0.66",
@@ -127,8 +104,8 @@ var tests = map[string]struct {
 		wantStruct: BuildInfo{
 			info: &debug.BuildInfo{
 				Settings: []debug.BuildSetting{
-					{Key: settingRevision, Value: "abcdefghi"},
-					{Key: settingTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
+					{Key: keyRevision, Value: "abcdefghi"},
+					{Key: keyTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
 				},
 			},
 			AltVersion: "v0.66",
@@ -140,28 +117,6 @@ var tests = map[string]struct {
 			keyTime:      "2020-06-16T19:53:00Z",
 		},
 		wantJson: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `"}`,
-	},
-	"extras": {
-		wantStruct: BuildInfo{
-			info: &debug.BuildInfo{
-				Settings: []debug.BuildSetting{
-					{Key: settingRevision, Value: "abcdefghi"},
-					{Key: settingTime, Value: time.Date(2020, 6, 16, 19, 53, 0, 0, time.UTC).Format(time.RFC3339)},
-				},
-			},
-			AltVersion: "v0.66",
-			Extra: map[string]string{
-				"foo": "bar",
-			},
-		},
-		wantMap: map[string]string{
-			keyVersion:   "v0.66",
-			keyGoversion: goVersion,
-			keyRevision:  "abcdefghi",
-			keyTime:      "2020-06-16T19:53:00Z",
-			"foo":        "bar",
-		},
-		wantJson: `{"version":"v0.66","revision":"abcdefghi","time":"2020-06-16T19:53:00Z","goversion":"` + goVersion + `","foo":"bar"}`,
 	},
 }
 
