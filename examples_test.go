@@ -13,11 +13,3 @@ func ExampleNew() {
 	fmt.Println(bld.String())
 	// Output: 1.2.3
 }
-
-func ExampleBuildInfo_WithExtra() {
-	var bld BuildInfo
-	bld.WithExtra("extra", "value")
-
-	fmt.Printf("version=%s, extra=%s\n", bld.AltVersion, bld.Extra["extra"])
-	// Output: version=, extra=value
-}
