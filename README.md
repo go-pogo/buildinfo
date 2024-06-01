@@ -41,7 +41,7 @@ Declare build info variables in your main package:
 package main
 
 // this value is changed via ldflags when building a new release
-var version
+var version string
 
 func main() {
     bld, err := buildinfo.New(version)
@@ -84,9 +84,9 @@ resource.Merge(
     resource.Default(),
     resource.NewSchemaless(
         semconv.ServiceName("myapp"),
-        semconv.ServiceVersion(bld.Version),
-        attribute.String("vcs.revision", bld.Revision),
-        attribute.String("vcs.time", bld.Time.Format(time.RFC3339)),
+        semconv.ServiceVersion(bld.Version()),
+        attribute.String("vcs.revision", bld.Revision()),
+        attribute.String("vcs.time", bld.Time().Format(time.RFC3339)),
     ),
 )
 ```
