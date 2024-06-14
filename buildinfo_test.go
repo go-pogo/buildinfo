@@ -5,11 +5,12 @@
 package buildinfo
 
 import (
-	"github.com/stretchr/testify/assert"
 	"runtime"
 	"runtime/debug"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var goVersion = runtime.Version()

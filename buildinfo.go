@@ -6,12 +6,13 @@ package buildinfo
 
 import (
 	"encoding/json"
-	"github.com/go-pogo/errors"
 	"io"
 	"runtime"
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"github.com/go-pogo/errors"
 )
 
 //goland:noinspection GoUnusedConst

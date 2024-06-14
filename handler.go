@@ -5,8 +5,9 @@
 package buildinfo
 
 import (
-	"github.com/go-pogo/writing"
 	"net/http"
+
+	"github.com/go-pogo/writing"
 )
 
 // HTTPHandler is the http.Handler that writes BuildInfo bld as a JSON response
