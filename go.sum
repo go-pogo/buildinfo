@@ -1,8 +1,8 @@
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/go-pogo/errors v0.11.0 h1:C8MV298ihwm4wTIZRSiv0qmB2f8LOCx/+rWBX+V9spA=
-github.com/go-pogo/errors v0.11.0/go.mod h1:siGu70A3ZN66hrvkQuK+t3O5eB7kquLnaw52L2IBtYg=
+github.com/go-pogo/errors v0.11.1 h1:q2WYtjRFrANsCT+9WnN4hGgQg1E1hyuuSDbBkM2+RrU=
+github.com/go-pogo/errors v0.11.1/go.mod h1:siGu70A3ZN66hrvkQuK+t3O5eB7kquLnaw52L2IBtYg=
 github.com/go-pogo/writing v0.2.0 h1:MzDFJdvVuBdt5oCfzASUJ0NQbmuKH/7h7cE4bkVVuaI=
 github.com/go-pogo/writing v0.2.0/go.mod h1:TSPLREl8jvEQmEz2uyLxkrunfJCEbAGTxYKAs5mM8mU=
 github.com/kr/pretty v0.2.1 h1:Fmg33tUaq4/8ym9TJN1x7sLJnHVwhP33CNkpYV/7rwI=
