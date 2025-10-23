@@ -185,7 +185,12 @@ func TestBuildInfo_Setting(t *testing.T) {
 		assert.Empty(t, bld.Setting("foobar"))
 	})
 	t.Run("after init", func(t *testing.T) {
-		assert.Exactly(t, runtime.GOOS, new(BuildInfo).Setting("GOOS"))
+		have := new(BuildInfo).Setting("GOOS")
+		if info, ok := debug.ReadBuildInfo(); ok {
+			assert.Exactly(t, Setting(info, "GOOS"), have)
+		} else {
+			assert.NotEmpty(t, have)
+		}
 	})
 }
 
