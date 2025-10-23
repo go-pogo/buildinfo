@@ -12,10 +12,10 @@ import (
 )
 
 func TestHttpHandler(t *testing.T) {
-	for name, tc := range tests {
+	for name, tc := range outputTests {
 		t.Run(name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
-			HTTPHandler(&tc.wantStruct).ServeHTTP(rec, nil)
+			HTTPHandler(&tc.input).ServeHTTP(rec, nil)
 			assert.Exactly(t, []byte(tc.wantJson), rec.Body.Bytes())
 		})
 	}

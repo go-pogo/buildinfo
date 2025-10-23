@@ -8,8 +8,11 @@ import (
 	"fmt"
 )
 
+// this value can be changed via ldflags when building a new release
+var version = "1.2.3"
+
 func ExampleNew() {
-	bld, _ := New("1.2.3")
+	bld := New(version)
 	fmt.Println(bld.String())
 	// Output: 1.2.3
 }
