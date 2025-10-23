@@ -12,17 +12,15 @@ Declare build info variables in your main package:
 	package main
 
 	// this value is changed via ldflags when building a new release
-	var version
+	var version string
 
 	func main() {
-		bld, err := buildinfo.New(version)
+		bld := buildinfo.New(version)
 	}
 
 Build your Go project and include the following ldflags:
 
-	go build -ldflags=" \
-	  -X main.version=`$(git describe --tags)` \
-	  main.go
+	go build -ldflags="-X main.version=`$(git describe --tags)`" ./...
 
 # Prometheus metric collector
 When using a metrics scraper like Prometheus, it is often a good idea to make

@@ -44,16 +44,14 @@ package main
 var version string
 
 func main() {
-    bld, err := buildinfo.New(version)
+    bld := buildinfo.New(version)
 }
 ```
 
 Build your Go project and include the following `ldflags`:
 
 ```sh
-go build -ldflags=" \
-  -X main.version=`$(git describe --tags)` \
-  main.go
+go build -ldflags="-X main.version=`$(git describe --tags)`" ./...
 ```
 
 ## Observability usage
@@ -83,10 +81,10 @@ prometheus.MustRegister(prometheus.NewGaugeFunc(
 resource.Merge(
     resource.Default(),
     resource.NewSchemaless(
-        semconv.ServiceName("myapp"),
-        semconv.ServiceVersion(bld.Version()),
-        attribute.String("vcs.revision", bld.Revision()),
-        attribute.String("vcs.time", bld.Time().Format(time.RFC3339)),
+        semconv.ServiceName(bld.AppName()),
+        semconv.ServiceVersion(bld.Version),
+        attribute.String("vcs.revision", bld.Revision),
+        attribute.String("vcs.time", bld.Time.Format(time.RFC3339)),
     ),
 )
 ```
