@@ -7,6 +7,7 @@ package buildinfo
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -60,6 +61,8 @@ func Time(info *debug.BuildInfo) time.Time {
 	}
 	return time.Time{}
 }
+
+var _ slog.LogValuer = (*BuildInfo)(nil)
 
 // BuildInfo contains the relevant information of the current release's build
 // version, revision and time.
@@ -273,4 +276,26 @@ func (bld *BuildInfo) writeJson(w io.StringWriter) {
 		_, _ = w.WriteString(bld.GoVersion)
 	}
 	_, _ = w.WriteString(`"}`)
+}
+
+func (bld *BuildInfo) LogValue() slog.Value {
+	attrs := make([]slog.Attr, 0, 4)
+
+	if bld.Version != "" {
+		attrs = append(attrs, slog.String("version", bld.Version))
+	}
+	if bld.Revision != "" {
+		attrs = append(attrs, slog.String("vcs_revision", bld.Revision))
+	}
+	if !bld.Time.IsZero() {
+		attrs = append(attrs, slog.Time("vcs_time", bld.Time))
+	}
+
+	if bld.GoVersion != "" {
+		attrs = append(attrs, slog.String("go_version", bld.GoVersion))
+	} else {
+		attrs = append(attrs, slog.String("go_version", runtime.Version()))
+	}
+
+	return slog.GroupValue(attrs...)
 }
